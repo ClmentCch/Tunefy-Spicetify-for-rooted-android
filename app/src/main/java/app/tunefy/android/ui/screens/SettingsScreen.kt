@@ -1,6 +1,11 @@
 package app.tunefy.android.ui.screens
 
+import android.content.Context
+import android.content.Intent
+import android.net.Uri
 import android.os.Build
+import android.os.Environment
+import android.provider.Settings as AndroidSettings
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -17,11 +22,13 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Build
 import androidx.compose.material.icons.rounded.Check
+import androidx.compose.material.icons.rounded.Folder
 import androidx.compose.material.icons.rounded.History
 import androidx.compose.material.icons.rounded.Info
 import androidx.compose.material.icons.rounded.Memory
 import androidx.compose.material.icons.rounded.OpenInNew
 import androidx.compose.material.icons.rounded.Refresh
+import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.material.icons.rounded.Storage
 import androidx.compose.material.icons.rounded.Update
 import androidx.compose.material3.Button
@@ -44,7 +51,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import app.tunefy.android.BuildConfig
 import app.tunefy.android.core.Constants
 import app.tunefy.android.data.model.ThemeMode
 import app.tunefy.android.ui.AppViewModel
@@ -63,6 +72,12 @@ fun SettingsScreen(
     val status by viewModel.repositoryStatus.collectAsStateWithLifecycle()
     val context = LocalContext.current
     var repositoryDraft by remember(settings.repositoryUrl) { mutableStateOf(settings.repositoryUrl) }
+    var allFilesAccess by remember { mutableStateOf(Environment.isExternalStorageManager()) }
+
+    LifecycleResumeEffect(Unit) {
+        allFilesAccess = Environment.isExternalStorageManager()
+        onPauseOrDispose { }
+    }
 
     fun openUrl(url: String) {
         runCatching {
@@ -187,6 +202,37 @@ fun SettingsScreen(
             }
         }
 
+        item { SectionHeader(title = "Accès aux fichiers", subtitle = "APK, stockage et autorisations") }
+        item {
+            SettingsCard {
+                Text("Sélecteur de fichiers", style = MaterialTheme.typography.titleSmall)
+                Text(
+                    "Pour APK Patcher, le sélecteur Android accorde l'accès uniquement au fichier choisi. " +
+                        "L'accès global ci-dessous est optionnel et n'est pas nécessaire pour patcher un APK.",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                HorizontalDivider()
+                SettingClickRow(
+                    title = "Autoriser l'accès à tous les fichiers",
+                    subtitle = if (allFilesAccess) {
+                        "Accordé · tous les dossiers publics sont accessibles"
+                    } else {
+                        "Non accordé · appuyez pour ouvrir le réglage Android"
+                    },
+                    icon = Icons.Rounded.Folder,
+                    onClick = { openAllFilesAccess(context) }
+                )
+                HorizontalDivider()
+                SettingClickRow(
+                    title = "Réglages de l'application",
+                    subtitle = "Installations, notifications et permissions Android",
+                    icon = Icons.Rounded.Settings,
+                    onClick = { openAppSettings(context) }
+                )
+            }
+        }
+
         item { SectionHeader(title = "Root et sécurité", subtitle = "Outils optionnels") }
         item {
             SettingsCard {
@@ -251,7 +297,7 @@ fun SettingsScreen(
             SettingsCard {
                 InfoLine("Android", Formatters.androidVersion(Build.VERSION.SDK_INT))
                 InfoLine("ABI", Build.SUPPORTED_ABIS.joinToString(", "))
-                InfoLine("TuneFy", "1.0.0 (GPL-3.0)")
+                InfoLine("TuneFy", "${BuildConfig.VERSION_NAME} (GPL-3.0)")
                 InfoLine("Dépôt", Constants.GITHUB_REPOSITORY)
             }
         }
@@ -280,6 +326,22 @@ fun SettingsScreen(
 
         item { BottomContentPadding() }
     }
+}
+
+private fun openAllFilesAccess(context: Context) {
+    val packageUri = Uri.fromParts("package", context.packageName, null)
+    val appIntent = Intent(AndroidSettings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION, packageUri)
+    val allIntent = Intent(AndroidSettings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION)
+    runCatching { context.startActivity(appIntent) }
+        .recoverCatching { context.startActivity(allIntent) }
+}
+
+private fun openAppSettings(context: Context) {
+    val intent = Intent(
+        AndroidSettings.ACTION_APPLICATION_DETAILS_SETTINGS,
+        Uri.fromParts("package", context.packageName, null)
+    )
+    runCatching { context.startActivity(intent) }
 }
 
 @Composable

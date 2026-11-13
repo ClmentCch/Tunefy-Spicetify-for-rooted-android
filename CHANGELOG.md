@@ -4,6 +4,34 @@ Toutes les évolutions notables de TuneFy sont documentées ici.
 Le format suit [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/) et le
 versionnage sémantique.
 
+## [1.3.0] - 2026-11-13
+
+### Corrigé
+
+- **Chargement du bundle de patches sous Android 14+** : ART refusait le DEX
+  `patches-1.2.0-tunefy.mpp` avec « Writable dex file ... is not allowed ».
+  `PatchBundleStore` vérifie désormais le SHA-256 puis force le bundle en
+  lecture seule (`0444`) avant de le confier à dexlib2 et `DexClassLoader`.
+  Le fichier n'est jamais modifié après vérification.
+- L'écran À propos et les Paramètres affichent la version issue de
+  `BuildConfig`, au lieu d'une valeur figée.
+
+### Ajouté
+
+- Section **Paramètres → Accès aux fichiers** : état de l'accès global,
+  ouverture du réglage Android « tous les fichiers » et accès direct aux
+  réglages de l'application. Cet accès reste optionnel : le sélecteur Android
+  suffit pour choisir un APK.
+- Version `1.3.0` (versionCode 4).
+
+### Limite
+
+- Le correctif supprime le blocage ART au chargement du bundle. L'exécution
+  complète des patches sur un Spotify 9.1.80.2221 installé n'a pas pu être
+  testée sans appareil Android dans cet environnement.
+
+[1.3.0]: https://github.com/ClmentCch/Tunefy-Spicetify-for-rooted-android/releases/tag/v1.3.0
+
 ## [1.0.2] - 2026-11-13
 
 ### Corrigé

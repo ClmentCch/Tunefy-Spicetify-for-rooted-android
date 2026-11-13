@@ -34,6 +34,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import app.tunefy.android.BuildConfig
 import app.tunefy.android.core.Constants
 import app.tunefy.android.ui.components.BottomContentPadding
 import app.tunefy.android.ui.components.TuneFyMark
@@ -75,7 +76,7 @@ fun AboutScreen() {
                 shape = RoundedCornerShape(50)
             ) {
                 Text(
-                    "Version 1.0.2 · GPL-3.0",
+                    "Version ${BuildConfig.VERSION_NAME} · GPL-3.0",
                     style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.onPrimaryContainer,
                     modifier = Modifier.padding(horizontal = 12.dp, vertical = 5.dp)

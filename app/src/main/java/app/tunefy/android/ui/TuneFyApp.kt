@@ -74,6 +74,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import app.tunefy.android.BuildConfig
 import app.tunefy.android.core.Constants
 import app.tunefy.android.data.model.Category
 import app.tunefy.android.ui.components.TuneFyWordmark
@@ -205,7 +206,7 @@ fun TuneFyApp(viewModel: AppViewModel, startOnDownloads: Boolean = false) {
                 }
                 HorizontalDivider()
                 Text(
-                    text = "TuneFy 1.0.2 · GPL-3.0\n${Constants.PROJECT_URL.removePrefix("https://")}",
+                    text = "TuneFy ${BuildConfig.VERSION_NAME} · GPL-3.0\n${Constants.PROJECT_URL.removePrefix("https://")}",
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(20.dp)

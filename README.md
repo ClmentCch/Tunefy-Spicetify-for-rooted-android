@@ -130,7 +130,7 @@ principes de navigation de F-Droid avec l'identité visuelle propre à TuneFy :
 
 ## Installation de l'APK
 
-1. Téléchargez `TuneFy-1.0.2-release.apk` depuis la page
+1. Téléchargez `TuneFy-1.3.0-release.apk` depuis la page
    [Releases](https://github.com/ClmentCch/Tunefy-Spicetify-for-rooted-android/releases).
 2. Vérifiez l'empreinte SHA-256 publiée dans les notes de version.
 3. Autorisez l'installation depuis cette source si Android le demande.
@@ -138,6 +138,9 @@ principes de navigation de F-Droid avec l'identité visuelle propre à TuneFy :
 
 Prérequis : Android 11 (API 30) minimum, ARM64 recommandé, Android 16/17 pris en
 charge (target API 36).
+
+L'accès à tous les fichiers est **optionnel** : le sélecteur Android suffit pour
+choisir un APK. L'option se trouve dans **Paramètres → Accès aux fichiers**.
 
 > L'APK de release est signé avec une clé de build conservée hors du dépôt.
 > Pour recevoir une future mise à jour par-dessus, elle devra être signée avec la

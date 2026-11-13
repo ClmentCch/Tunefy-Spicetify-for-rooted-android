@@ -31,8 +31,8 @@ android {
         applicationId = "app.tunefy.android"
         minSdk = 30
         targetSdk = 36
-        versionCode = 3
-        versionName = "1.0.2"
+        versionCode = 4
+        versionName = "1.3.0"
         resourceConfigurations += listOf("en", "fr")
         vectorDrawables { useSupportLibrary = true }
     }

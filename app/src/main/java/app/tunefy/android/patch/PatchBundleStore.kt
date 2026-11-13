@@ -24,6 +24,7 @@ object PatchBundleStore {
         val target = File(directory, "patches-$VERSION-tunefy.mpp")
         if (target.exists() && FileHasher.sha256(target) == EXPECTED_SHA256) {
             validate(target)
+            ensureReadOnly(target)
             return target
         }
         if (target.exists()) target.delete()
@@ -44,6 +45,7 @@ object PatchBundleStore {
                 temporary.copyTo(target, overwrite = true)
                 temporary.delete()
             }
+            ensureReadOnly(target)
             target
         } catch (error: IOException) {
             temporary.delete()
@@ -51,6 +53,21 @@ object PatchBundleStore {
                 "Impossible d'extraire le bundle de patches intégré.",
                 error.stackTraceToString(),
                 error
+            )
+        }
+    }
+
+    /**
+     * Android 14+ / ART refuses to load a DEX whose file is writable
+     * ("Writable dex file ... is not allowed"). The bundle is immutable data
+     * after its SHA-256 has been checked, so make it read-only before handing
+     * it to dexlib2 and DexClassLoader.
+     */
+    private fun ensureReadOnly(file: File) {
+        if (file.canWrite() && !file.setReadOnly()) {
+            throw PatchRunException(
+                "Impossible de protéger le bundle de patches en lecture seule.",
+                "setReadOnly failed for ${file.absolutePath}"
             )
         }
     }
