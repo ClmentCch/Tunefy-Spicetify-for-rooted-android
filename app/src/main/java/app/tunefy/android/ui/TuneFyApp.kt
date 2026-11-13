@@ -205,7 +205,7 @@ fun TuneFyApp(viewModel: AppViewModel, startOnDownloads: Boolean = false) {
                 }
                 HorizontalDivider()
                 Text(
-                    text = "TuneFy 1.1.0 · GPL-3.0\n${Constants.PROJECT_URL.removePrefix("https://")}",
+                    text = "TuneFy 1.0.2 · GPL-3.0\n${Constants.PROJECT_URL.removePrefix("https://")}",
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(20.dp)

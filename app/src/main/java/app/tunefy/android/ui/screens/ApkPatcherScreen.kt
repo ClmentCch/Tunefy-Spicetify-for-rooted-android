@@ -21,6 +21,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.ArrowForward
 import androidx.compose.material.icons.rounded.CheckCircle
+import androidx.compose.material.icons.rounded.Download
 import androidx.compose.material.icons.rounded.ErrorOutline
 import androidx.compose.material.icons.rounded.Folder
 import androidx.compose.material.icons.rounded.History
@@ -59,6 +60,7 @@ import app.tunefy.android.patch.GeneratedPatch
 import app.tunefy.android.patch.PatchAvailability
 import app.tunefy.android.patch.PatchStage
 import app.tunefy.android.patch.PatchUiState
+import app.tunefy.android.patch.SpotifyOfficialApk
 import app.tunefy.android.patch.StageProgress
 import app.tunefy.android.patch.StageStatus
 import app.tunefy.android.ui.AppViewModel
@@ -106,7 +108,11 @@ fun ApkPatcherScreen(
             ImportCard(
                 analyzing = state.analyzing,
                 running = state.running,
+                officialDownloading = state.officialDownloading,
+                officialDownloadedBytes = state.officialDownloadedBytes,
+                officialTotalBytes = state.officialTotalBytes,
                 onPick = { picker.launch(arrayOf("*/*")) },
+                onDownloadOfficial = viewModel::downloadOfficialApk,
                 onOpenCompatibility = onOpenCompatibility
             )
         }
@@ -241,9 +247,19 @@ private fun PatcherHero() {
 private fun ImportCard(
     analyzing: Boolean,
     running: Boolean,
+    officialDownloading: Boolean,
+    officialDownloadedBytes: Long,
+    officialTotalBytes: Long,
     onPick: () -> Unit,
+    onDownloadOfficial: () -> Unit,
     onOpenCompatibility: () -> Unit
 ) {
+    val busy = analyzing || running || officialDownloading
+    val fraction = if (officialTotalBytes > 0L) {
+        (officialDownloadedBytes.toFloat() / officialTotalBytes).coerceIn(0f, 1f)
+    } else {
+        0f
+    }
     Surface(
         shape = RoundedCornerShape(20.dp),
         color = MaterialTheme.colorScheme.surface,
@@ -257,24 +273,53 @@ private fun ImportCard(
                     tint = MaterialTheme.colorScheme.primary,
                     modifier = Modifier.size(18.dp)
                 )
-                Text("APK Spotify local", style = MaterialTheme.typography.titleSmall, modifier = Modifier.weight(1f))
+                Text("Choisir la base Spotify", style = MaterialTheme.typography.titleSmall, modifier = Modifier.weight(1f))
                 InfoPill("APK · APKS · XAPK")
             }
             Text(
-                "TuneFy ne redistribue aucun APK Spotify. Sélectionnez un fichier provenant d'une source officielle " +
-                    "ou de votre propre sauvegarde. Le fichier reste sur l'appareil.",
+                "Deux chemins : votre propre fichier, ou l'APK officiel 9.1.80.2221 publié dans la release TuneFy. " +
+                    "L'APK officiel est téléchargé dans TuneFy, vérifié par SHA-256, puis analysé.",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
             Button(
                 onClick = onPick,
-                enabled = !analyzing && !running,
+                enabled = !busy,
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(50)
             ) {
                 Icon(Icons.Rounded.Folder, contentDescription = null, modifier = Modifier.size(17.dp))
                 Spacer(Modifier.width(7.dp))
-                Text(if (analyzing) "Analyse…" else "Choisir un APK")
+                Text(if (analyzing) "Analyse…" else "Choisir mon propre APK")
+            }
+            OutlinedButton(
+                onClick = onDownloadOfficial,
+                enabled = !busy,
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(50)
+            ) {
+                Icon(Icons.Rounded.Download, contentDescription = null, modifier = Modifier.size(17.dp))
+                Spacer(Modifier.width(7.dp))
+                Text(
+                    if (officialDownloading) "Téléchargement de l'APK officiel…"
+                    else "Utiliser l'APK officiel 9.1.80.2221"
+                )
+            }
+            if (officialDownloading) {
+                LinearProgressIndicator(progress = { fraction }, modifier = Modifier.fillMaxWidth())
+                Text(
+                    "${Formatters.bytes(officialDownloadedBytes)} / ${Formatters.bytes(officialTotalBytes)} · " +
+                        "${Formatters.percent(fraction)} · ${Formatters.bytes(SpotifyOfficialApk.SIZE_BYTES)} attendus",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            } else {
+                Text(
+                    "Release ${SpotifyOfficialApk.RELEASE_TAG} · Spotify ${SpotifyOfficialApk.VERSION} · " +
+                        "${Formatters.bytes(SpotifyOfficialApk.SIZE_BYTES)} · SHA-256 vérifié avant analyse",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
             }
             TextButton(onClick = onOpenCompatibility, contentPadding = PaddingValues(0.dp)) {
                 Text("Voir les versions Spotify prises en charge")

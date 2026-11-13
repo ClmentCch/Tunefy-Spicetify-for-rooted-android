@@ -109,7 +109,10 @@ data class PatchUiState(
     val running: Boolean = false,
     val error: String? = null,
     val result: PatchRunResult? = null,
-    val log: String = ""
+    val log: String = "",
+    val officialDownloading: Boolean = false,
+    val officialDownloadedBytes: Long = 0L,
+    val officialTotalBytes: Long = SpotifyOfficialApk.SIZE_BYTES
 ) {
     val canStart: Boolean
         get() = analysis?.compatible == true && !running && !analyzing && selected.isNotEmpty()

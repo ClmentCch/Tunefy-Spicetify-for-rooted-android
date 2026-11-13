@@ -2,6 +2,7 @@ package app.tunefy.android.patch
 
 import com.android.tools.smali.dexlib2.Opcodes
 import com.android.tools.smali.dexlib2.dexbacked.DexBackedDexFile
+import java.io.ByteArrayInputStream
 import java.io.File
 import java.io.IOException
 import java.util.zip.ZipFile
@@ -65,7 +66,13 @@ object DexIndexer {
                         .filter { !it.isDirectory && dexEntry.matches(it.name) }
                         .forEach { entry ->
                             zip.getInputStream(entry).use { input ->
-                                val dex = DexBackedDexFile.fromInputStream(Opcodes.forApi(35), input)
+                                // dexlib2 calls mark() on the header stream. A ZipFile
+                                // InputStream is not markable, so decode from memory.
+                                val bytes = input.readBytes()
+                                val dex = DexBackedDexFile.fromInputStream(
+                                    Opcodes.forApi(35),
+                                    ByteArrayInputStream(bytes)
+                                )
                                 dex.classes.forEach { definition ->
                                     val methods = HashSet<String>()
                                     definition.methods.forEach { method ->

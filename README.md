@@ -96,6 +96,7 @@ une architecture **MVVM**, des **coroutines** et un dépôt JSON versionné.
 | --- | --- |
 | Moteur de patch embarqué (bibliothèque Morphe Patcher 2.3.0, GPL-3.0) | ✅ |
 | Import APK, APKS et XAPK avec fusion des splits | ✅ |
+| Deux sources : fichier personnel ou APK officiel 9.1.80.2221 téléchargé et vérifié dans TuneFy | ✅ |
 | Analyse version, versionCode, ABI, signature et classes DEX | ✅ |
 | Profils de compatibilité extensibles (`spotify-profiles.json`) | ✅ |
 | Catalogue de 8 patches Spicetify Android 1.2.0 | ✅ |
@@ -129,7 +130,7 @@ principes de navigation de F-Droid avec l'identité visuelle propre à TuneFy :
 
 ## Installation de l'APK
 
-1. Téléchargez `TuneFy-1.1.0-release.apk` depuis la page
+1. Téléchargez `TuneFy-1.0.2-release.apk` depuis la page
    [Releases](https://github.com/ClmentCch/Tunefy-Spicetify-for-rooted-android/releases).
 2. Vérifiez l'empreinte SHA-256 publiée dans les notes de version.
 3. Autorisez l'installation depuis cette source si Android le demande.
@@ -265,6 +266,21 @@ TuneFy embarque le bundle 1.2.0 corrigé et le charge directement dans son propr
 processus Android via `loadPatchesFromDex`. Aucun Morphe Manager, aucune
 installation externe et aucune ouverture d'application tierce ne sont requis.
 
+### Deux sources dans APK Patcher
+
+1. **Choisir mon propre APK** : sélecteur Android, pour un APK, APKS ou XAPK
+   téléchargé ou fourni par vous.
+2. **Utiliser l'APK officiel 9.1.80.2221** : TuneFy télécharge l'APK publié dans
+   la release [`Spotify-Apk`](https://github.com/ClmentCch/Tunefy-Spicetify-for-rooted-android/releases/tag/Spotify-Apk),
+   affiche la progression, vérifie son SHA-256
+   (`f4826f9a9148b15d4a7adeb10a01603a6eca2ff29d16c9d59a320439b4ff17da`) puis
+   l'analyse. Le fichier est conservé dans le stockage privé et réutilisé lors
+   des ouvertures suivantes.
+
+L'APK officiel pèse 150 486 785 octets (environ 144 Mo). Il n'est pas embarqué
+ dans TuneFy : le téléchargement se fait depuis GitHub, à votre initiative.
+Détails de l'inspection et de la reconstruction : [docs/OFFICIAL_APK.md](docs/OFFICIAL_APK.md).
+
 ### Versions prises en charge
 
 - **Spotify 9.1.80.2221**, versionCode `145767611`, **arm64-v8a** uniquement.
@@ -273,6 +289,15 @@ installation externe et aucune ouverture d'application tierce ne sont requis.
   **9.2.0.26 est explicitement non supportée** : le patch « Hide Home and Browse
   ads » y échoue avec `Spotify advertising ABI changed: Lp/jb20;`. Le message
   exact est affiché, sans prétendre que le patch a réussi.
+
+### Correction de l'import « APK corrompu »
+
+Un APK Spotify pourtant valide pouvait être refusé avec « L'APK est corrompu ».
+La cause était dans `DexIndexer` : le flux d'une entrée `ZipFile` ne supporte pas
+`mark()`, exigé par dexlib2. Chaque DEX est désormais lu dans un
+`ByteArrayInputStream`. L'APK officiel 9.1.80.2221 (17 DEX, 97 135 classes) est
+analysé et déclaré compatible ; une reconstruction ARSCLib conserve ses 17 DEX,
+ses 48 bibliothèques natives et son manifeste.
 
 ### Correction `SettingsPatch.settingsPatch`
 

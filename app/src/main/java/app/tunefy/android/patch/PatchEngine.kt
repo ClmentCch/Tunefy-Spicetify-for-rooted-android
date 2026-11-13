@@ -49,7 +49,15 @@ class PatchEngine(
 
     suspend fun analyze(uri: Uri, displayName: String? = null): ApkAnalysis = withContext(Dispatchers.IO) {
         val name = displayName ?: queryName(uri)
-        val imported = copyImport(uri, name)
+        analyzeImported(copyImport(uri, name), name)
+    }
+
+    /** Analyzes a file already inside TuneFy's private storage, without copying it again. */
+    suspend fun analyzeFile(file: File): ApkAnalysis = withContext(Dispatchers.IO) {
+        analyzeImported(file, file.name)
+    }
+
+    private fun analyzeImported(imported: File, name: String?): ApkAnalysis {
         val expanded = expand(imported)
         val base = expanded.primaryApk
         val details = ApkInspector.inspect(context, base)
@@ -74,7 +82,7 @@ class PatchEngine(
         )
         val installedSignature = details.packageId?.let { ApkInspector.installedSignature(context, it) }
         val tuneFySignature = TuneFySigningKey.existingCertificateSha256(context)
-        ApkAnalysis(
+        return ApkAnalysis(
             displayName = name ?: imported.name,
             packageName = details.packageId,
             versionName = details.versionName,

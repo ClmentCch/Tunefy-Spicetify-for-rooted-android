@@ -158,6 +158,32 @@ class EngineUnitTest {
     }
 
     @Test
+    fun `DexIndexer accepts a non-markable ZipFile stream`() {
+        val directory = createTempDirectory("tunefy-dex").toFile()
+        try {
+            val apk = File(directory, "tiny.apk")
+            val dex = javaClass.classLoader!!.getResourceAsStream("tiny.dex")
+                ?: error("Fixture tiny.dex absente")
+            ZipOutputStream(apk.outputStream()).use { zip ->
+                zip.putNextEntry(ZipEntry("classes.dex"))
+                dex.use { input -> input.copyTo(zip) }
+                zip.closeEntry()
+            }
+
+            val index = DexIndexer.index(listOf(apk))
+            assertTrue(index.hasClass("Ltest/Tiny;"))
+            assertTrue(index.hasMethod("Ltest/Tiny;", "value()"))
+            assertEquals(150_486_785L, SpotifyOfficialApk.SIZE_BYTES)
+            assertEquals(
+                "f4826f9a9148b15d4a7adeb10a01603a6eca2ff29d16c9d59a320439b4ff17da",
+                SpotifyOfficialApk.SHA256
+            )
+        } finally {
+            directory.deleteRecursively()
+        }
+    }
+
+    @Test
     fun `ABI detector reads split lib folders and file names`() {
         val directory = createTempDirectory("tunefy-abi").toFile()
         try {

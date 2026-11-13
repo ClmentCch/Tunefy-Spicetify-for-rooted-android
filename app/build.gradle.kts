@@ -31,8 +31,8 @@ android {
         applicationId = "app.tunefy.android"
         minSdk = 30
         targetSdk = 36
-        versionCode = 2
-        versionName = "1.1.0"
+        versionCode = 3
+        versionName = "1.0.2"
         resourceConfigurations += listOf("en", "fr")
         vectorDrawables { useSupportLibrary = true }
     }
@@ -86,6 +86,7 @@ android {
     }
 
     testOptions.unitTests.isReturnDefaultValues = true
+    testOptions.unitTests.all { it.maxHeapSize = "3g" }
 
     lint {
         abortOnError = false

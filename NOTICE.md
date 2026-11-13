@@ -13,7 +13,7 @@ ni à F-Droid, ni à Spicetify, ni à Morphe.
 
 ## Composants intégrés et code source correspondant
 
-TuneFy 1.1.0 intègre le moteur de patch **Morphe Patcher 2.3.0** sous GPL-3.0,
+TuneFy intègre le moteur de patch **Morphe Patcher 2.3.0** sous GPL-3.0,
 chargé comme bibliothèque Android/ART. Le binaire non modifié est vendored dans
 `libs/m2/app/morphe/morphe-patcher/2.3.0/` ; son code source correspondant est
 publié par le projet Morphe (GPL-3.0). TuneFy conserve les mentions de copyright

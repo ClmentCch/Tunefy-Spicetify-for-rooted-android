@@ -75,7 +75,7 @@ fun AboutScreen() {
                 shape = RoundedCornerShape(50)
             ) {
                 Text(
-                    "Version 1.1.0 · GPL-3.0",
+                    "Version 1.0.2 · GPL-3.0",
                     style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.onPrimaryContainer,
                     modifier = Modifier.padding(horizontal = 12.dp, vertical = 5.dp)

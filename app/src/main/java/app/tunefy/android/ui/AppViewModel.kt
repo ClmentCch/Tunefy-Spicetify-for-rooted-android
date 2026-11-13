@@ -8,6 +8,7 @@ import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import app.tunefy.android.AppContainer
+import app.tunefy.android.core.Constants
 import app.tunefy.android.data.model.BackupEntry
 import app.tunefy.android.data.model.CatalogItem
 import app.tunefy.android.data.model.Compatibility
@@ -19,15 +20,18 @@ import app.tunefy.android.data.model.InstalledItem
 import app.tunefy.android.data.model.RootStatus
 import app.tunefy.android.data.model.SpotifyStatus
 import app.tunefy.android.data.model.ThemeMode
+import app.tunefy.android.data.remote.Http
 import app.tunefy.android.download.DownloadEvent
 import app.tunefy.android.install.ApkInspector
 import app.tunefy.android.install.InstallStart
+import app.tunefy.android.patch.ApkAnalysis
 import app.tunefy.android.patch.GeneratedPatch
 import app.tunefy.android.patch.PatchHistoryRecord
 import app.tunefy.android.patch.PatchRunException
 import app.tunefy.android.patch.PatchStage
 import app.tunefy.android.patch.PatchUiState
 import app.tunefy.android.patch.StageProgress
+import app.tunefy.android.patch.SpotifyOfficialApk
 import app.tunefy.android.patch.StageStatus
 import app.tunefy.android.patch.TuneFySigningKey
 import app.tunefy.android.util.FileHasher
@@ -44,6 +48,7 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import okhttp3.Request
 import java.io.File
 import java.io.IOException
 import java.util.UUID
@@ -364,60 +369,160 @@ class AppViewModel(private val container: AppContainer) : ViewModel() {
     // -------------------------------------------------------------------- patcher
 
     fun selectPatchApk(uri: Uri) {
-        if (_patchUi.value.analyzing || _patchUi.value.running) return
+        if (_patchUi.value.analyzing || _patchUi.value.running || _patchUi.value.officialDownloading) return
+        viewModelScope.launch { runAnalysis { patchEngine.analyze(uri) } }
+    }
+
+    /**
+     * Downloads the exact 9.1.80.2221 APK published on the TuneFy GitHub release,
+     * verifies its pinned SHA-256, then analyzes it without leaving TuneFy.
+     */
+    fun downloadOfficialApk() {
+        val state = _patchUi.value
+        if (state.analyzing || state.running || state.officialDownloading) return
         viewModelScope.launch {
             _patchUi.update {
                 it.copy(
-                    analyzing = true,
-                    analysis = null,
+                    officialDownloading = true,
+                    officialDownloadedBytes = 0L,
+                    officialTotalBytes = SpotifyOfficialApk.SIZE_BYTES,
                     error = null,
-                    result = null,
-                    log = "",
-                    stages = PatchStage.entries.map { stage -> StageProgress(stage) }
+                    result = null
                 )
             }
-            try {
-                val analysis = patchEngine.analyze(uri)
-                val defaults = patchBundle.value?.patches.orEmpty()
-                    .filter { it.default }
-                    .map { it.name }
-                    .filter { analysis.patchAvailability[it]?.enabled != false }
-                    .toSet()
-                _patchUi.value = PatchUiState(
-                    analysis = analysis,
-                    analyzing = false,
-                    selected = defaults,
-                    stages = PatchStage.entries.map { stage ->
-                        when (stage) {
-                            PatchStage.ANALYZE -> StageProgress(stage, StageStatus.DONE, analysis.displayName)
-                            PatchStage.COMPATIBILITY -> StageProgress(stage, StageStatus.DONE, analysis.reason)
-                            else -> StageProgress(stage)
-                        }
-                    },
-                    log = buildString {
-                        appendLine("Fichier : ${analysis.displayName}")
-                        appendLine("Package : ${analysis.packageName ?: "inconnu"}")
-                        appendLine("Version : ${analysis.versionName ?: "inconnue"} (${analysis.versionCode})")
-                        appendLine("ABI : ${analysis.abis.joinToString(", ").ifBlank { "non détectée" }}")
-                        appendLine("Modules : ${analysis.splitCount}")
-                        appendLine("SHA-256 : ${analysis.sha256}")
-                        appendLine("Compatibilité : ${analysis.reason}")
-                    }
-                )
-                toast(
-                    if (analysis.compatible) "APK analysé · Spotify ${analysis.versionName}"
-                    else "APK incompatible : ${analysis.reason}"
-                )
-            } catch (error: PatchRunException) {
-                _patchUi.update { it.copy(analyzing = false, error = error.userMessage) }
-                toast("APK refusé : ${error.userMessage}")
+            val file = try {
+                fetchOfficialApk()
             } catch (error: Exception) {
                 _patchUi.update {
-                    it.copy(analyzing = false, error = error.message ?: "Analyse de l'APK impossible")
+                    it.copy(
+                        officialDownloading = false,
+                        error = "Téléchargement de l'APK officiel impossible : ${error.message}"
+                    )
                 }
-                toast("Analyse impossible : ${error.message}")
+                toast("Téléchargement impossible : ${error.message}")
+                return@launch
+            }
+            _patchUi.update {
+                it.copy(
+                    officialDownloading = false,
+                    officialDownloadedBytes = file.length(),
+                    officialTotalBytes = file.length()
+                )
+            }
+            runAnalysis { patchEngine.analyzeFile(file) }
+        }
+    }
+
+    private suspend fun fetchOfficialApk(): File = withContext(Dispatchers.IO) {
+        val directory = File(context.filesDir, "patch/official").apply { mkdirs() }
+        val target = File(directory, "Spotify-${SpotifyOfficialApk.VERSION}.apk")
+        if (target.isFile && FileHasher.sha256(target).equals(SpotifyOfficialApk.SHA256, ignoreCase = true)) {
+            return@withContext target
+        }
+        val part = File(directory, "${target.name}.part")
+        if (part.exists()) part.delete()
+        val request = Request.Builder()
+            .url(SpotifyOfficialApk.DOWNLOAD_URL)
+            .header("User-Agent", Constants.USER_AGENT)
+            .header("Accept", "*/*")
+            .build()
+        val client = Http.client.newBuilder()
+            .readTimeout(120, java.util.concurrent.TimeUnit.SECONDS)
+            .build()
+        client.newCall(request).execute().use { response ->
+            if (!response.isSuccessful) {
+                throw IOException("GitHub a répondu HTTP ${response.code}")
+            }
+            val body = response.body ?: throw IOException("Réponse vide")
+            val total = body.contentLength().takeIf { it > 0L } ?: SpotifyOfficialApk.SIZE_BYTES
+            _patchUi.update { it.copy(officialTotalBytes = total) }
+            body.byteStream().use { input ->
+                part.outputStream().use { output ->
+                    val buffer = ByteArray(128 * 1024)
+                    var downloaded = 0L
+                    var lastUpdate = 0L
+                    while (true) {
+                        val count = input.read(buffer)
+                        if (count < 0) break
+                        output.write(buffer, 0, count)
+                        downloaded += count
+                        val now = System.currentTimeMillis()
+                        if (now - lastUpdate >= 250L) {
+                            lastUpdate = now
+                            _patchUi.update { it.copy(officialDownloadedBytes = downloaded) }
+                        }
+                    }
+                }
             }
         }
+        val actual = FileHasher.sha256(part)
+        if (!actual.equals(SpotifyOfficialApk.SHA256, ignoreCase = true)) {
+            part.delete()
+            throw IOException("SHA-256 incorrect : $actual")
+        }
+        if (target.exists()) target.delete()
+        if (!part.renameTo(target)) {
+            part.copyTo(target, overwrite = true)
+            part.delete()
+        }
+        target
+    }
+
+    private suspend fun runAnalysis(load: suspend () -> ApkAnalysis) {
+        _patchUi.update {
+            it.copy(
+                analyzing = true,
+                analysis = null,
+                error = null,
+                result = null,
+                log = "",
+                stages = PatchStage.entries.map { stage -> StageProgress(stage) }
+            )
+        }
+        try {
+            displayAnalysis(load())
+        } catch (error: PatchRunException) {
+            _patchUi.update { it.copy(analyzing = false, error = error.userMessage) }
+            toast("APK refusé : ${error.userMessage}")
+        } catch (error: Exception) {
+            _patchUi.update {
+                it.copy(analyzing = false, error = error.message ?: "Analyse de l'APK impossible")
+            }
+            toast("Analyse impossible : ${error.message}")
+        }
+    }
+
+    private fun displayAnalysis(analysis: ApkAnalysis) {
+        val defaults = patchBundle.value?.patches.orEmpty()
+            .filter { it.default }
+            .map { it.name }
+            .filter { analysis.patchAvailability[it]?.enabled != false }
+            .toSet()
+        _patchUi.value = PatchUiState(
+            analysis = analysis,
+            analyzing = false,
+            selected = defaults,
+            stages = PatchStage.entries.map { stage ->
+                when (stage) {
+                    PatchStage.ANALYZE -> StageProgress(stage, StageStatus.DONE, analysis.displayName)
+                    PatchStage.COMPATIBILITY -> StageProgress(stage, StageStatus.DONE, analysis.reason)
+                    else -> StageProgress(stage)
+                }
+            },
+            log = buildString {
+                appendLine("Fichier : ${analysis.displayName}")
+                appendLine("Package : ${analysis.packageName ?: "inconnu"}")
+                appendLine("Version : ${analysis.versionName ?: "inconnue"} (${analysis.versionCode})")
+                appendLine("ABI : ${analysis.abis.joinToString(", ").ifBlank { "non détectée" }}")
+                appendLine("Modules : ${analysis.splitCount}")
+                appendLine("SHA-256 : ${analysis.sha256}")
+                appendLine("Compatibilité : ${analysis.reason}")
+            }
+        )
+        toast(
+            if (analysis.compatible) "APK analysé · Spotify ${analysis.versionName}"
+            else "APK incompatible : ${analysis.reason}"
+        )
     }
 
     fun togglePatchSelection(name: String, enabled: Boolean) {

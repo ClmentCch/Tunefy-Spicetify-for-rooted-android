@@ -4,6 +4,31 @@ Toutes les évolutions notables de TuneFy sont documentées ici.
 Le format suit [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/) et le
 versionnage sémantique.
 
+## [1.0.2] - 2026-11-13
+
+### Corrigé
+
+- **Import d'un APK Spotify valide signalé comme corrompu** : `DexIndexer`
+  passait à dexlib2 le flux d'une entrée `ZipFile`, qui ne supporte pas `mark`.
+  Chaque DEX est maintenant lu dans un `ByteArrayInputStream`. L'APK officiel
+  9.1.80.2221 (150 486 785 octets, 17 DEX, 97 135 classes) est analysé et
+  déclaré compatible.
+- Reconstruction ARSCLib vérifiée sur cet APK réel : 17 DEX et 48 bibliothèques
+  natives conservés, manifeste `com.spotify.music` / versionCode `145767611`
+  préservé.
+
+### Ajouté
+
+- **Deux boutons dans APK Patcher** : « Choisir mon propre APK » et « Utiliser
+  l'APK officiel 9.1.80.2221 ».
+- Téléchargement intégré de l'APK officiel depuis la release GitHub
+  `Spotify-Apk`, avec progression, vérification SHA-256
+  (`f4826f9a9148b15d4a7adeb10a01603a6eca2ff29d16c9d59a320439b4ff17da`) et
+  réutilisation du fichier déjà téléchargé.
+- Version `1.0.2` (versionCode 3) pour remplacer la build 1.1.0 (versionCode 2).
+
+[1.0.2]: https://github.com/ClmentCch/Tunefy-Spicetify-for-rooted-android/releases/tag/v1.0.2
+
 ## [1.1.0] - 2026-11-13
 
 ### Ajouté

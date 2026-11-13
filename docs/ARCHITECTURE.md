@@ -100,9 +100,9 @@ l'APK, le signe avec la clé TuneFy et vérifie la signature.
 ## Moteur de patch
 
 ```text
-URI / APK / APKS / XAPK
+URI / APK / APKS / XAPK / APK officiel téléchargé par TuneFy
   → ApkInspector.expand (splits)
-  → DexIndexer.index (classes + méthodes)
+  → DexIndexer.index (classes + méthodes, DEX lu en mémoire)
   → AbiDetector.detect (lib/<abi>)
   → SpotifyCompatibility.evaluate (profil JSON)
   → PatchEngine.patch
