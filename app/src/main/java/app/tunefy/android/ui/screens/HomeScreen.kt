@@ -1,7 +1,7 @@
 package app.tunefy.android.ui.screens
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -21,12 +22,15 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.ArrowForward
+import androidx.compose.material.icons.rounded.Download
+import androidx.compose.material.icons.rounded.Memory
 import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material.icons.rounded.Shield
 import androidx.compose.material.icons.rounded.Verified
 import androidx.compose.material3.Badge
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -43,19 +47,21 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.tunefy.android.data.model.CatalogItem
 import app.tunefy.android.data.model.Category
 import app.tunefy.android.data.model.Compatibility
-import app.tunefy.android.data.model.DownloadStatus
+import app.tunefy.android.data.model.PatchBundle
 import app.tunefy.android.data.model.RepositoryStatus
+import app.tunefy.android.data.model.SpotifyStatus
 import app.tunefy.android.ui.AppViewModel
 import app.tunefy.android.ui.StoreUi
 import app.tunefy.android.ui.components.AppIcon
 import app.tunefy.android.ui.components.BottomContentPadding
+import app.tunefy.android.ui.components.CompatBadge
 import app.tunefy.android.ui.components.CompactItemCard
 import app.tunefy.android.ui.components.ErrorBanner
-import app.tunefy.android.ui.components.ItemRow
 import app.tunefy.android.ui.components.SectionHeader
 import app.tunefy.android.ui.components.ThemeCard
 import app.tunefy.android.ui.theme.TuneFyColors
@@ -70,6 +76,7 @@ fun HomeScreen(
     onOpenThemes: () -> Unit,
     onOpenDownloads: () -> Unit,
     onOpenPatches: () -> Unit,
+    onOpenCompatibility: () -> Unit,
     onOpenSearch: () -> Unit
 ) {
     val index by viewModel.index.collectAsStateWithLifecycle()
@@ -83,10 +90,11 @@ fun HomeScreen(
     val spotifyItems = items.filter { it.categoryEnum == Category.SPOTIFY }
     val extensions = items.filter { it.categoryEnum == Category.EXTENSIONS }
     val themes = items.filter { it.categoryEnum == Category.THEMES }
-    val updates = items.sortedByDescending { it.publishedAt }.take(6)
-    val featured = items.firstOrNull { it.featured }
+    val updates = items.sortedByDescending { it.publishedAt }.take(4)
+    val featured = spotifyItems.firstOrNull { it.featured }
         ?: spotifyItems.firstOrNull { it.downloadType == "external" }
         ?: spotifyItems.firstOrNull()
+    val activeDownloads = downloads.count { it.status.isActive }
 
     fun installedVersion(item: CatalogItem): String? {
         installed.firstOrNull { it.itemId == item.id }?.let { return it.version }
@@ -101,138 +109,671 @@ fun HomeScreen(
         return
     }
 
-    LazyColumn(
-        modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(start = 18.dp, end = 18.dp, top = 4.dp),
-        verticalArrangement = Arrangement.spacedBy(18.dp)
+    val background = MaterialTheme.colorScheme.background
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(
+                Brush.verticalGradient(
+                    colors = listOf(
+                        MaterialTheme.colorScheme.primary.copy(alpha = 0.08f),
+                        background,
+                        background
+                    ),
+                    endY = 900f
+                )
+            )
     ) {
-        item {
-            SearchLauncher(onClick = onOpenSearch)
-        }
+        LazyColumn(
+            modifier = Modifier.fillMaxSize(),
+            contentPadding = PaddingValues(start = 18.dp, end = 18.dp, top = 6.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            item { HomeIntro() }
 
-        if (featured != null) {
+            item { SearchLauncher(onClick = onOpenSearch) }
+
+            if (featured != null) {
+                item {
+                    SpotifyHero(
+                        item = featured,
+                        installedVersion = installedVersion(featured),
+                        patchCount = patchBundle?.patches?.size ?: 0,
+                        onOpen = { onOpenItem(featured.id) },
+                        onInstall = { viewModel.install(featured, installAfter = false) }
+                    )
+                }
+            }
+
             item {
-                SpotifyHero(
-                    item = featured,
-                    installedVersion = installedVersion(featured),
-                    activeDownloads = downloads.count { it.status.isActive },
-                    onOpen = { onOpenItem(featured.id) },
-                    onInstall = { viewModel.install(featured, installAfter = false) },
-                    onDownloads = onOpenDownloads
+                QuickActions(
+                    patchCount = patchBundle?.patches?.size ?: 0,
+                    activeDownloads = activeDownloads,
+                    onOpenPatches = onOpenPatches,
+                    onOpenDownloads = onOpenDownloads,
+                    onOpenCompatibility = onOpenCompatibility
                 )
             }
-        }
 
-        item {
-            RepositoryStrip(status = status, onRefresh = viewModel::refreshCatalog)
-        }
+            item { RepositoryStrip(status = status, onRefresh = viewModel::refreshCatalog) }
 
-        if (status.error != null) {
-            item {
-                ErrorBanner(message = status.error!!, onRetry = viewModel::refreshCatalog)
+            if (status.error != null) {
+                item {
+                    ErrorBanner(message = status.error!!, onRetry = viewModel::refreshCatalog)
+                }
             }
-        }
 
-        if (spotifyItems.isNotEmpty()) {
-            item {
-                Column {
-                    SectionHeader(
-                        title = "Dernières versions",
-                        subtitle = "Spotify officiel et builds préparés pour les patches",
-                        actionLabel = "Tout voir",
-                        onAction = { onOpenCatalog(Category.SPOTIFY) }
-                    )
-                    Spacer(Modifier.height(10.dp))
-                    LazyRow(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                        items(spotifyItems, key = { it.id }) { item ->
-                            CompactItemCard(
-                                item = item,
-                                compatibility = StoreUi.compatibility(item, spotify, patchBundle),
-                                installedVersion = installedVersion(item),
-                                onClick = { onOpenItem(item.id) }
-                            )
+            if (spotifyItems.isNotEmpty()) {
+                item {
+                    Column {
+                        SectionHeader(
+                            title = "Spotify",
+                            subtitle = "La bonne base pour vos patches",
+                            actionLabel = "Tout voir",
+                            onAction = { onOpenCatalog(Category.SPOTIFY) }
+                        )
+                        Spacer(Modifier.height(10.dp))
+                        LazyRow(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                            items(spotifyItems, key = { it.id }) { item ->
+                                CompactItemCard(
+                                    item = item,
+                                    compatibility = StoreUi.compatibility(item, spotify, patchBundle),
+                                    installedVersion = installedVersion(item),
+                                    onClick = { onOpenItem(item.id) },
+                                    width = 196.dp
+                                )
+                            }
                         }
                     }
                 }
             }
-        }
 
-        if (extensions.isNotEmpty()) {
-            item {
-                Column {
-                    SectionHeader(
-                        title = "Extensions populaires",
-                        subtitle = "Ajoutez des fonctions à Spotify",
-                        actionLabel = "Bibliothèque",
-                        onAction = onOpenExtensions
-                    )
-                    Spacer(Modifier.height(10.dp))
-                    LazyRow(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                        items(extensions, key = { it.id }) { item ->
-                            CompactItemCard(
-                                item = item,
-                                compatibility = StoreUi.compatibility(item, spotify, patchBundle),
-                                installedVersion = installedVersion(item),
-                                onClick = { onOpenItem(item.id) }
-                            )
+            if (extensions.isNotEmpty()) {
+                item {
+                    Column {
+                        SectionHeader(
+                            title = "Extensions",
+                            subtitle = "Des fonctions en plus, sans friction",
+                            actionLabel = "Bibliothèque",
+                            onAction = onOpenExtensions
+                        )
+                        Spacer(Modifier.height(10.dp))
+                        LazyRow(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                            items(extensions, key = { it.id }) { item ->
+                                CompactItemCard(
+                                    item = item,
+                                    compatibility = StoreUi.compatibility(item, spotify, patchBundle),
+                                    installedVersion = installedVersion(item),
+                                    onClick = { onOpenItem(item.id) }
+                                )
+                            }
                         }
                     }
                 }
             }
-        }
 
-        if (themes.isNotEmpty()) {
-            item {
-                Column {
-                    SectionHeader(
-                        title = "Thèmes recommandés",
-                        subtitle = "Palettes prêtes pour Spotify",
-                        actionLabel = "Tous les thèmes",
-                        onAction = onOpenThemes
-                    )
-                    Spacer(Modifier.height(10.dp))
-                    LazyRow(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                        items(themes, key = { it.id }) { item ->
-                            ThemeCard(
-                                item = item,
-                                compatibility = StoreUi.compatibility(item, spotify, patchBundle),
-                                installedVersion = installedVersion(item),
-                                onClick = { onOpenItem(item.id) },
-                                modifier = Modifier.width(224.dp)
-                            )
+            if (themes.isNotEmpty()) {
+                item {
+                    Column {
+                        SectionHeader(
+                            title = "Thèmes",
+                            subtitle = "Changez l'ambiance en un geste",
+                            actionLabel = "Tous les thèmes",
+                            onAction = onOpenThemes
+                        )
+                        Spacer(Modifier.height(10.dp))
+                        LazyRow(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                            items(themes, key = { it.id }) { item ->
+                                ThemeCard(
+                                    item = item,
+                                    compatibility = StoreUi.compatibility(item, spotify, patchBundle),
+                                    installedVersion = installedVersion(item),
+                                    onClick = { onOpenItem(item.id) },
+                                    modifier = Modifier.width(224.dp)
+                                )
+                            }
                         }
                     }
                 }
             }
-        }
 
-        if (updates.isNotEmpty()) {
-            item {
-                SectionHeader(
-                    title = "Dernières mises à jour",
-                    subtitle = "Le plus récent du dépôt TuneFy"
-                )
+            if (updates.isNotEmpty()) {
+                item {
+                    SectionHeader(
+                        title = "À découvrir",
+                        subtitle = "Les derniers ajouts du dépôt",
+                        actionLabel = "Tout le catalogue",
+                        onAction = { onOpenCatalog(Category.ALL) }
+                    )
+                }
+                item {
+                    UpdateList(
+                        updates = updates,
+                        spotify = spotify,
+                        patchBundle = patchBundle,
+                        onOpenItem = onOpenItem
+                    )
+                }
             }
-            items(updates, key = { "update-${it.id}" }) { item ->
-                ItemRow(
-                    item = item,
-                    installedVersion = installedVersion(item),
-                    compatibility = StoreUi.compatibility(item, spotify, patchBundle),
-                    onClick = { onOpenItem(item.id) }
-                )
-            }
-        }
 
-        item {
-            CompatibilityShortcut(
-                patchCount = patchBundle?.patches?.size ?: 0,
-                onClick = onOpenPatches
+            item { TrustFooter() }
+            item { BottomContentPadding() }
+        }
+    }
+}
+
+@Composable
+private fun HomeIntro() {
+    Column(verticalArrangement = Arrangement.spacedBy(7.dp)) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Box(
+                Modifier
+                    .width(18.dp)
+                    .height(2.dp)
+                    .clip(CircleShape)
+                    .background(MaterialTheme.colorScheme.primary)
+            )
+            Text(
+                "PERSONNALISATION",
+                style = MaterialTheme.typography.labelSmall.copy(letterSpacing = 1.4.sp),
+                color = MaterialTheme.colorScheme.primary
             )
         }
+        Text(
+            "Votre Spotify,\nà votre façon.",
+            style = MaterialTheme.typography.headlineLarge,
+            color = MaterialTheme.colorScheme.onBackground
+        )
+        Text(
+            "Extensions, thèmes et patches vérifiés pour transformer votre écoute.",
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+    }
+}
 
-        item { SecurityCard() }
+@Composable
+private fun SearchLauncher(onClick: () -> Unit) {
+    Surface(
+        onClick = onClick,
+        shape = RoundedCornerShape(18.dp),
+        color = MaterialTheme.colorScheme.surface,
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.65f)),
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Row(
+            modifier = Modifier.padding(start = 12.dp, end = 12.dp, top = 9.dp, bottom = 9.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+            Surface(
+                shape = CircleShape,
+                color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.6f)
+            ) {
+                Icon(
+                    Icons.Rounded.Search,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.padding(8.dp).size(18.dp)
+                )
+            }
+            Text(
+                "Rechercher une extension, un thème…",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.weight(1f),
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+            Icon(
+                Icons.Rounded.ArrowForward,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.65f),
+                modifier = Modifier.size(18.dp)
+            )
+        }
+    }
+}
 
-        item { BottomContentPadding() }
+@Composable
+private fun SpotifyHero(
+    item: CatalogItem,
+    installedVersion: String?,
+    patchCount: Int,
+    onOpen: () -> Unit,
+    onInstall: () -> Unit
+) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(28.dp))
+            .background(
+                Brush.linearGradient(
+                    colors = listOf(
+                        Color(0xFF1D4E7A),
+                        TuneFyColors.DeepBlue,
+                        Color(0xFF102B46)
+                    ),
+                    start = Offset.Zero,
+                    end = Offset(1000f, 760f)
+                )
+            )
+    ) {
+        Box(
+            modifier = Modifier
+                .align(Alignment.TopEnd)
+                .offset(x = 48.dp, y = (-54).dp)
+                .size(190.dp)
+                .clip(CircleShape)
+                .background(Color.White.copy(alpha = 0.055f))
+        )
+        Box(
+            modifier = Modifier
+                .align(Alignment.BottomEnd)
+                .offset(x = 28.dp, y = 34.dp)
+                .size(112.dp)
+                .clip(CircleShape)
+                .background(TuneFyColors.PastelBlue.copy(alpha = 0.08f))
+        )
+
+        Column(
+            modifier = Modifier.padding(20.dp),
+            verticalArrangement = Arrangement.spacedBy(13.dp)
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    "À LA UNE",
+                    style = MaterialTheme.typography.labelSmall.copy(letterSpacing = 1.6.sp),
+                    color = Color.White.copy(alpha = 0.62f)
+                )
+                Spacer(Modifier.weight(1f))
+                Surface(
+                    color = if (installedVersion != null) {
+                        TuneFyColors.Success.copy(alpha = 0.22f)
+                    } else {
+                        Color.White.copy(alpha = 0.12f)
+                    },
+                    shape = RoundedCornerShape(50)
+                ) {
+                    Row(
+                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        Box(
+                            Modifier
+                                .size(6.dp)
+                                .clip(CircleShape)
+                                .background(if (installedVersion != null) TuneFyColors.Success else TuneFyColors.PastelBlue)
+                        )
+                        Text(
+                            if (installedVersion != null) "Installé" else "Prêt à patcher",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = Color.White
+                        )
+                    }
+                }
+            }
+
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(14.dp)
+            ) {
+                AppIcon(item = item, size = 62.dp)
+                Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
+                    Text(item.name, style = MaterialTheme.typography.headlineSmall, color = Color.White)
+                    Text(
+                        if (installedVersion != null) "Installé · v$installedVersion"
+                        else "${item.developer.ifBlank { "Spotify officiel" }} · v${item.version}",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = Color.White.copy(alpha = 0.72f),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
+            }
+
+            Text(
+                item.summary,
+                style = MaterialTheme.typography.bodyMedium,
+                color = Color.White.copy(alpha = 0.82f),
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis
+            )
+
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                HeroStat("Version", item.version, Modifier.weight(1f))
+                HeroStat("Taille", Formatters.bytes(item.sizeBytes), Modifier.weight(1f))
+                HeroStat("Patches", patchCount.toString(), Modifier.weight(1f))
+            }
+
+            Row(horizontalArrangement = Arrangement.spacedBy(9.dp)) {
+                Surface(
+                    onClick = onOpen,
+                    color = Color.White,
+                    shape = RoundedCornerShape(50),
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Row(
+                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 11.dp),
+                        horizontalArrangement = Arrangement.Center,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            "Découvrir",
+                            style = MaterialTheme.typography.labelLarge,
+                            color = TuneFyColors.DeepBlue
+                        )
+                        Spacer(Modifier.width(5.dp))
+                        Icon(
+                            Icons.Rounded.ArrowForward,
+                            contentDescription = null,
+                            tint = TuneFyColors.DeepBlue,
+                            modifier = Modifier.size(15.dp)
+                        )
+                    }
+                }
+                Surface(
+                    onClick = onInstall,
+                    color = Color.White.copy(alpha = 0.12f),
+                    border = BorderStroke(1.dp, Color.White.copy(alpha = 0.18f)),
+                    shape = RoundedCornerShape(50),
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Text(
+                        if (installedVersion != null) "Mettre à jour" else "Installer",
+                        style = MaterialTheme.typography.labelLarge,
+                        color = Color.White,
+                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 11.dp)
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun HeroStat(label: String, value: String, modifier: Modifier = Modifier) {
+    Surface(
+        modifier = modifier,
+        color = Color.White.copy(alpha = 0.075f),
+        border = BorderStroke(1.dp, Color.White.copy(alpha = 0.08f)),
+        shape = RoundedCornerShape(14.dp)
+    ) {
+        Column(modifier = Modifier.padding(horizontal = 10.dp, vertical = 9.dp)) {
+            Text(
+                label.uppercase(),
+                style = MaterialTheme.typography.labelSmall.copy(fontSize = 9.sp, letterSpacing = 0.8.sp),
+                color = Color.White.copy(alpha = 0.54f)
+            )
+            Text(
+                value,
+                style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.SemiBold),
+                color = Color.White,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+        }
+    }
+}
+
+@Composable
+private fun QuickActions(
+    patchCount: Int,
+    activeDownloads: Int,
+    onOpenPatches: () -> Unit,
+    onOpenDownloads: () -> Unit,
+    onOpenCompatibility: () -> Unit
+) {
+    Row(horizontalArrangement = Arrangement.spacedBy(9.dp)) {
+        QuickActionTile(
+            title = "Patcher",
+            subtitle = "$patchCount patches",
+            icon = Icons.Rounded.Memory,
+            onClick = onOpenPatches,
+            emphasized = true,
+            modifier = Modifier.weight(1f)
+        )
+        QuickActionTile(
+            title = "Téléch.",
+            subtitle = if (activeDownloads > 0) "$activeDownloads en cours" else "Mes fichiers",
+            icon = Icons.Rounded.Download,
+            onClick = onOpenDownloads,
+            badge = activeDownloads,
+            modifier = Modifier.weight(1f)
+        )
+        QuickActionTile(
+            title = "Vérifier",
+            subtitle = "Spotify & ABI",
+            icon = Icons.Rounded.Verified,
+            onClick = onOpenCompatibility,
+            modifier = Modifier.weight(1f)
+        )
+    }
+}
+
+@Composable
+private fun QuickActionTile(
+    title: String,
+    subtitle: String,
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    emphasized: Boolean = false,
+    badge: Int = 0
+) {
+    Surface(
+        onClick = onClick,
+        modifier = modifier.height(112.dp),
+        shape = RoundedCornerShape(19.dp),
+        color = if (emphasized) {
+            MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.58f)
+        } else {
+            MaterialTheme.colorScheme.surface
+        },
+        border = BorderStroke(
+            1.dp,
+            if (emphasized) MaterialTheme.colorScheme.primary.copy(alpha = 0.16f)
+            else MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.55f)
+        )
+    ) {
+        Column(
+            modifier = Modifier.padding(11.dp),
+            verticalArrangement = Arrangement.spacedBy(7.dp)
+        ) {
+            Box {
+                Surface(
+                    shape = CircleShape,
+                    color = if (emphasized) {
+                        MaterialTheme.colorScheme.primary.copy(alpha = 0.14f)
+                    } else {
+                        MaterialTheme.colorScheme.surfaceContainerHigh
+                    }
+                ) {
+                    Icon(
+                        icon,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.padding(9.dp).size(19.dp)
+                    )
+                }
+                if (badge > 0) {
+                    Badge(modifier = Modifier.align(Alignment.TopEnd).offset(x = 5.dp, y = (-5).dp)) {
+                        Text(badge.toString())
+                    }
+                }
+            }
+            Column(verticalArrangement = Arrangement.spacedBy(1.dp)) {
+                Text(title, style = MaterialTheme.typography.titleSmall, maxLines = 1)
+                Text(
+                    subtitle,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun RepositoryStrip(status: RepositoryStatus, onRefresh: () -> Unit) {
+    Surface(
+        shape = RoundedCornerShape(16.dp),
+        color = MaterialTheme.colorScheme.surfaceContainerLow.copy(alpha = 0.62f),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
+    ) {
+        Row(
+            modifier = Modifier.padding(start = 13.dp, end = 3.dp, top = 3.dp, bottom = 3.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Box(
+                Modifier
+                    .size(7.dp)
+                    .clip(CircleShape)
+                    .background(if (status.error != null) TuneFyColors.Warning else TuneFyColors.Success)
+            )
+            Text(
+                if (status.error != null) "Dépôt indisponible" else "Dépôt à jour",
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            Text(
+                "· ${status.itemCount} éléments" +
+                    if (status.updated.isNotBlank()) " · ${Formatters.shortDate(status.updated)}" else "",
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.68f),
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.weight(1f)
+            )
+            if (status.loading) {
+                CircularProgressIndicator(
+                    modifier = Modifier.padding(8.dp).size(16.dp),
+                    strokeWidth = 2.dp
+                )
+            } else {
+                IconButton(onClick = onRefresh, modifier = Modifier.size(34.dp)) {
+                    Icon(
+                        Icons.Rounded.Refresh,
+                        contentDescription = "Actualiser le dépôt",
+                        modifier = Modifier.size(17.dp)
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun UpdateList(
+    updates: List<CatalogItem>,
+    spotify: SpotifyStatus,
+    patchBundle: PatchBundle?,
+    onOpenItem: (String) -> Unit
+) {
+    Surface(
+        shape = RoundedCornerShape(22.dp),
+        color = MaterialTheme.colorScheme.surface,
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.55f))
+    ) {
+        Column {
+            updates.forEachIndexed { index, item ->
+                Surface(
+                    onClick = { onOpenItem(item.id) },
+                    color = Color.Transparent
+                ) {
+                    Row(
+                        modifier = Modifier.padding(horizontal = 13.dp, vertical = 11.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        AppIcon(item = item, size = 44.dp)
+                        Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                            Text(
+                                item.name,
+                                style = MaterialTheme.typography.titleSmall,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                            Text(
+                                item.summary,
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(6.dp)
+                            ) {
+                                Text(
+                                    "v${item.version}",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                                val compatibility = StoreUi.compatibility(item, spotify, patchBundle)
+                                if (compatibility != Compatibility.UNKNOWN) {
+                                    CompatBadge(compatibility, compact = true)
+                                }
+                            }
+                        }
+                        Icon(
+                            Icons.Rounded.ArrowForward,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.55f),
+                            modifier = Modifier.size(16.dp)
+                        )
+                    }
+                }
+                if (index != updates.lastIndex) {
+                    HorizontalDivider(
+                        modifier = Modifier.padding(start = 69.dp),
+                        thickness = 0.5.dp,
+                        color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun TrustFooter() {
+    Surface(
+        shape = RoundedCornerShape(18.dp),
+        color = MaterialTheme.colorScheme.surfaceContainerLow.copy(alpha = 0.55f)
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(11.dp)
+        ) {
+            Icon(
+                Icons.Rounded.Shield,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.size(20.dp)
+            )
+            Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                Text("Contenus vérifiés", style = MaterialTheme.typography.titleSmall)
+                Text(
+                    "SHA-256, signatures contrôlées et données Spotify intactes.",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+            Text(
+                "GPL-3.0",
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.primary
+            )
+        }
     }
 }
 
@@ -254,377 +795,6 @@ private fun LoadingOrEmpty(isLoading: Boolean, message: String?) {
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
-        }
-    }
-}
-
-@Composable
-private fun SearchLauncher(onClick: () -> Unit) {
-    Surface(
-        onClick = onClick,
-        shape = RoundedCornerShape(50),
-        color = MaterialTheme.colorScheme.surface,
-        border = androidx.compose.foundation.BorderStroke(
-            1.dp,
-            MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.7f)
-        ),
-        modifier = Modifier.fillMaxWidth()
-    ) {
-        Row(
-            modifier = Modifier.padding(start = 16.dp, end = 8.dp, top = 8.dp, bottom = 8.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(10.dp)
-        ) {
-            Icon(
-                Icons.Rounded.Search,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.size(20.dp)
-            )
-            Text(
-                "Rechercher une extension, un thème…",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.weight(1f),
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
-            )
-            Surface(
-                color = MaterialTheme.colorScheme.primaryContainer,
-                shape = RoundedCornerShape(50)
-            ) {
-                Text(
-                    "Rechercher",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onPrimaryContainer,
-                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp)
-                )
-            }
-        }
-    }
-}
-
-@Composable
-private fun SpotifyHero(
-    item: CatalogItem,
-    installedVersion: String?,
-    activeDownloads: Int,
-    onOpen: () -> Unit,
-    onInstall: () -> Unit,
-    onDownloads: () -> Unit
-) {
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(28.dp))
-            .background(
-                Brush.linearGradient(
-                    colors = listOf(TuneFyColors.DeepBlue, Color(0xFF1E3A5A), Color(0xFF13293D)),
-                    start = Offset.Zero,
-                    end = Offset(900f, 700f)
-                )
-            )
-    ) {
-        // Decorative rings, drawn without images so they stay crisp everywhere.
-        Box(
-            modifier = Modifier
-                .align(Alignment.TopEnd)
-                .padding(top = 18.dp, end = 18.dp)
-                .size(118.dp)
-                .clip(CircleShape)
-                .background(TuneFyColors.Blue.copy(alpha = 0.12f))
-        )
-        Box(
-            modifier = Modifier
-                .align(Alignment.BottomEnd)
-                .padding(bottom = 26.dp, end = 42.dp)
-                .size(64.dp)
-                .clip(CircleShape)
-                .background(TuneFyColors.PastelBlue.copy(alpha = 0.10f))
-        )
-
-        Column(modifier = Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                AppIcon(item = item, size = 58.dp)
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = item.name,
-                        style = MaterialTheme.typography.headlineSmall,
-                        color = Color.White
-                    )
-                    Text(
-                        text = if (installedVersion != null) "Installé · v$installedVersion"
-                        else "${item.developer} · v${item.version}",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = Color.White.copy(alpha = 0.75f)
-                    )
-                }
-                Surface(
-                    color = Color.White.copy(alpha = 0.14f),
-                    shape = RoundedCornerShape(50)
-                ) {
-                    Text(
-                        "Officiel",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = Color.White,
-                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp)
-                    )
-                }
-            }
-
-            Text(
-                text = item.summary,
-                style = MaterialTheme.typography.bodyMedium,
-                color = Color.White.copy(alpha = 0.88f),
-                maxLines = 3,
-                overflow = TextOverflow.Ellipsis
-            )
-
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                HeroChip("${item.architecture.uppercase()} · ${Formatters.bytes(item.sizeBytes)}")
-                HeroChip("Patches compatibles")
-                if (activeDownloads > 0) HeroChip("$activeDownloads actif(s)")
-            }
-
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(10.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Surface(
-                    onClick = onOpen,
-                    color = Color.White,
-                    shape = RoundedCornerShape(50)
-                ) {
-                    Row(
-                        modifier = Modifier.padding(horizontal = 18.dp, vertical = 11.dp),
-                        horizontalArrangement = Arrangement.spacedBy(7.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            "Voir la fiche",
-                            style = MaterialTheme.typography.labelLarge,
-                            color = TuneFyColors.DeepBlue
-                        )
-                        Icon(
-                            Icons.Rounded.ArrowForward,
-                            contentDescription = null,
-                            tint = TuneFyColors.DeepBlue,
-                            modifier = Modifier.size(16.dp)
-                        )
-                    }
-                }
-                Surface(
-                    onClick = onInstall,
-                    color = TuneFyColors.SpotifyGreen,
-                    shape = RoundedCornerShape(50)
-                ) {
-                    Text(
-                        if (installedVersion != null) "Mettre à jour" else "Installer",
-                        style = MaterialTheme.typography.labelLarge,
-                        color = Color(0xFF06281A),
-                        modifier = Modifier.padding(horizontal = 18.dp, vertical = 11.dp)
-                    )
-                }
-            }
-
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(6.dp),
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Icon(
-                    Icons.Rounded.Shield,
-                    contentDescription = null,
-                    tint = Color.White.copy(alpha = 0.55f),
-                    modifier = Modifier.size(13.dp)
-                )
-                Text(
-                    "Téléchargements vérifiés SHA-256 · installation officielle Android",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = Color.White.copy(alpha = 0.6f),
-                    modifier = Modifier.weight(1f)
-                )
-                Text(
-                    "Téléch.",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = TuneFyColors.PastelBlue,
-                    modifier = Modifier.clickableNoRipple(onDownloads)
-                )
-            }
-        }
-    }
-}
-
-private fun Modifier.clickableNoRipple(onClick: () -> Unit): Modifier =
-    this.then(Modifier.clickable(onClick = onClick))
-
-@Composable
-private fun HeroChip(text: String) {
-    Surface(
-        color = Color.White.copy(alpha = 0.12f),
-        shape = RoundedCornerShape(50)
-    ) {
-        Text(
-            text,
-            style = MaterialTheme.typography.labelSmall,
-            color = Color.White.copy(alpha = 0.9f),
-            modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp)
-        )
-    }
-}
-
-@Composable
-private fun RepositoryStrip(status: RepositoryStatus, onRefresh: () -> Unit) {
-    Surface(
-        shape = RoundedCornerShape(18.dp),
-        color = MaterialTheme.colorScheme.surfaceContainerLow,
-        border = androidx.compose.foundation.BorderStroke(
-            1.dp,
-            MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
-        ),
-        modifier = Modifier.fillMaxWidth()
-    ) {
-        Row(
-            modifier = Modifier.padding(start = 14.dp, end = 4.dp, top = 8.dp, bottom = 8.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(10.dp)
-        ) {
-            Box(
-                Modifier
-                    .size(9.dp)
-                    .clip(CircleShape)
-                    .background(if (status.error != null) TuneFyColors.Warning else TuneFyColors.Success)
-            )
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = status.name.ifBlank { "Dépôt TuneFy" },
-                    style = MaterialTheme.typography.titleSmall
-                )
-                Text(
-                    text = "${status.itemCount} éléments · ${status.source}" +
-                        if (status.updated.isNotBlank()) " · ${Formatters.shortDate(status.updated)}" else "",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-            if (status.loading) {
-                CircularProgressIndicator(
-                    modifier = Modifier
-                        .padding(12.dp)
-                        .size(18.dp),
-                    strokeWidth = 2.dp
-                )
-            } else {
-                IconButton(onClick = onRefresh) {
-                    Icon(Icons.Rounded.Refresh, contentDescription = "Actualiser le dépôt")
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun CompatibilityShortcut(patchCount: Int, onClick: () -> Unit) {
-    Surface(
-        onClick = onClick,
-        shape = RoundedCornerShape(20.dp),
-        color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.45f),
-        modifier = Modifier.fillMaxWidth()
-    ) {
-        Row(
-            modifier = Modifier.padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(14.dp)
-        ) {
-            Surface(shape = CircleShape, color = MaterialTheme.colorScheme.primary.copy(alpha = 0.12f)) {
-                Icon(
-                    Icons.Rounded.Verified,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.padding(10.dp).size(22.dp)
-                )
-            }
-            Column(modifier = Modifier.weight(1f)) {
-                Text("$patchCount patches Spicetify disponibles", style = MaterialTheme.typography.titleSmall)
-                Text(
-                    "Compatibilité vérifiée avec la version de Spotify installée.",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-            Badge { Text("TuneFy") }
-        }
-    }
-}
-
-@Composable
-private fun SecurityCard() {
-    val context = androidx.compose.ui.platform.LocalContext.current
-    Surface(
-        shape = RoundedCornerShape(22.dp),
-        color = MaterialTheme.colorScheme.surfaceContainerLow,
-        border = androidx.compose.foundation.BorderStroke(
-            1.dp,
-            MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
-        ),
-        modifier = Modifier.fillMaxWidth()
-    ) {
-        Column(
-            modifier = Modifier.padding(18.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                Icon(
-                    Icons.Rounded.Shield,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.size(20.dp)
-                )
-                Text("Sécurité et transparence", style = MaterialTheme.typography.titleSmall)
-            }
-            Text(
-                "Chaque fichier est vérifié par empreinte SHA-256 avant installation. " +
-                    "Les APK passent par l'installateur officiel Android et les signatures sont contrôlées. " +
-                    "TuneFy ne contourne ni DRM ni abonnement, et ne modifie jamais les données privées de Spotify.",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(6.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    "Code source GPL-3.0",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.clickableNoRipple {
-                        runCatching {
-                            context.startActivity(
-                                android.content.Intent(
-                                    android.content.Intent.ACTION_VIEW,
-                                    android.net.Uri.parse(app.tunefy.android.core.Constants.PROJECT_URL)
-                                )
-                            )
-                        }
-                    }
-                )
-                Spacer(Modifier.size(4.dp))
-                Box(
-                    Modifier
-                        .size(3.dp)
-                        .clip(CircleShape)
-                        .background(MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f))
-                )
-                Spacer(Modifier.size(4.dp))
-                Text(
-                    "Aucune publicité, aucun compte",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
         }
     }
 }

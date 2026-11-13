@@ -130,7 +130,7 @@ principes de navigation de F-Droid avec l'identité visuelle propre à TuneFy :
 
 ## Installation de l'APK
 
-1. Téléchargez `TuneFy-2.0.0-release.apk` depuis la page
+1. Téléchargez `TuneFy-3.1.0-release.apk` depuis la page
    [Releases](https://github.com/ClmentCch/Tunefy-Spicetify-for-rooted-android/releases).
 2. Vérifiez l'empreinte SHA-256 publiée dans les notes de version.
 3. Autorisez l'installation depuis cette source si Android le demande.
@@ -322,6 +322,16 @@ les 8 patches s'appliquent, l'APK est reconstruit (154 529 679 octets). Aucun
 appareil Android n'était disponible pour tester l'installation ; ce test reste
 à faire sur un téléphone. L'empreinte SHA-256 du bundle est vérifiée avant
 chaque utilisation (`85c934b567272b2205ac7022a03c03998a2ccb312146e7fa4cca12ed659fda1f`).
+
+### Correction de la signature release (3.1.0)
+
+En release, R8 renommait les classes d'algorithmes que BouncyCastle référence
+par leur nom. La création du certificat échouait donc avec
+`cannot create signer: no such algorithm: SHA256WITHRSA for provider BC`.
+Les providers BouncyCastle sont maintenant explicitement conservés par
+ProGuard, et le certificat TuneFy est signé avec le JCA Android. Le moteur
+transmet aussi l'étape réellement en cours, donc une erreur de signature
+s'affiche sur **Signature TuneFy**, pas sur une étape précédente.
 
 ### Pipeline
 

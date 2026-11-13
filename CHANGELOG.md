@@ -4,6 +4,43 @@ Toutes les évolutions notables de TuneFy sont documentées ici.
 Le format suit [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/) et le
 versionnage sémantique.
 
+## [3.1.0] - 2026-11-13
+
+### Corrigé
+
+- **Signature TuneFy en release** : R8 renommait ou supprimait les classes
+  d'algorithmes que BouncyCastle référence par leur nom. La création du
+  certificat échouait avec « cannot create signer: no such algorithm:
+  SHA256WITHRSA for provider BC ». Le build conserve désormais les providers
+  BouncyCastle et le certificat est signé avec le JCA Android plutôt que par
+  le provider BC.
+- L'étape en échec est maintenant transmise directement par le moteur : une
+  erreur de signature est affichée sur « Signature TuneFy », plus sur
+  « Préparation des fichiers ».
+
+### Modifié
+
+- **Nouvel accueil** : en-tête éditorial, recherche compacte, fiche Spotify
+  allégée avec statistiques, actions rapides Patcher/Téléchargements/
+  Compatibilité, liste des nouveautés groupée et bandeau de confiance plus
+  discret.
+- Version `3.1.0` (versionCode 6).
+
+### Vérifié
+
+- `./gradlew :app:testDebugUnitTest` : 14 tests, 0 échec, y compris la
+  création de certificat avec le signer JCA et la signature d'un APK.
+- `./gradlew :app:assembleRelease` : réussi ; les classes
+  `DigestSignatureSpi` et `BcKeyStoreSpi` sont présentes dans le DEX final.
+
+### Limite
+
+- L'installation et le lancement réels du Spotify patché restent à tester sur
+  un appareil Android ; l'interface n'a pas pu être inspectée visuellement
+  dans cet environnement sans émulateur KVM.
+
+[3.1.0]: https://github.com/ClmentCch/Tunefy-Spicetify-for-rooted-android/releases/tag/v3.1.0
+
 ## [2.0.0] - 2026-11-13
 
 ### Corrigé

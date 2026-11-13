@@ -161,19 +161,24 @@ class PatchEngine(
         rootLogger.addHandler(handler)
 
         var patcher: Patcher? = null
+        var activeStage = PatchStage.ANALYZE
+        fun reportStage(stage: PatchStage, status: StageStatus, detail: String) {
+            activeStage = stage
+            onStage(stage, status, detail)
+        }
         try {
-            onStage(PatchStage.ANALYZE, StageStatus.DONE, analysis.displayName)
-            onStage(PatchStage.COMPATIBILITY, StageStatus.DONE, "Profil ${analysis.versionName} · ${analysis.abis.joinToString(", ")}")
+            reportStage(PatchStage.ANALYZE, StageStatus.DONE, analysis.displayName)
+            reportStage(PatchStage.COMPATIBILITY, StageStatus.DONE, "Profil ${analysis.versionName} · ${analysis.abis.joinToString(", ")}")
 
-            onStage(PatchStage.PREPARE, StageStatus.RUNNING, "Préparation de l'APK d'entrée")
+            reportStage(PatchStage.PREPARE, StageStatus.RUNNING, "Préparation de l'APK d'entrée")
             val input = prepareInput(analysis, runDir, ::append)
-            onStage(PatchStage.PREPARE, StageStatus.DONE, input.name)
+            reportStage(PatchStage.PREPARE, StageStatus.DONE, input.name)
 
             val bundle = PatchBundleStore.ensure(context)
             append("Bundle ${PatchBundleStore.VERSION} · SHA-256 ${PatchBundleStore.EXPECTED_SHA256}")
             append("Entrée ${input.name} · ${input.length()} octets")
 
-            onStage(PatchStage.APPLY, StageStatus.RUNNING, "Chargement des patches")
+            reportStage(PatchStage.APPLY, StageStatus.RUNNING, "Chargement des patches")
             val patches = loadPatchesFromDex(setOf(bundle)).byPatchesFile[bundle].orEmpty()
             if (patches.isEmpty()) {
                 throw PatchRunException(
@@ -216,27 +221,43 @@ class PatchEngine(
                     }
                     append("✓ ${result.patch.name ?: "patch sans nom"}")
                 }
-            onStage(
+            reportStage(
                 PatchStage.APPLY,
                 StageStatus.DONE,
                 "${selectedPatches.size} patch${if (selectedPatches.size > 1) "s" else ""} appliqué${if (selectedPatches.size > 1) "s" else ""}"
             )
 
-            onStage(PatchStage.REBUILD, StageStatus.RUNNING, "Reconstruction de l'APK")
+            reportStage(PatchStage.REBUILD, StageStatus.RUNNING, "Reconstruction de l'APK")
             val unsigned = File(runDir, "patched-unsigned.apk")
             patcher.writeApk(unsigned)
             if (!unsigned.exists() || unsigned.length() == 0L) {
                 throw PatchRunException("La reconstruction n'a produit aucun APK.", "writeApk produced no file")
             }
-            onStage(PatchStage.REBUILD, StageStatus.DONE, "${unsigned.length()} octets avant signature")
+            reportStage(PatchStage.REBUILD, StageStatus.DONE, "${unsigned.length()} octets avant signature")
 
-            onStage(PatchStage.SIGN, StageStatus.RUNNING, "Clé TuneFy")
+            reportStage(PatchStage.SIGN, StageStatus.RUNNING, "Clé TuneFy")
             val signed = File(runDir, "patched-signed.apk")
-            val signingDetails = TuneFySigningKey.details(context)
-            ApkUtils.signApk(unsigned, signed, "TuneFy", signingDetails, 30)
-            onStage(PatchStage.SIGN, StageStatus.DONE, "Signature TuneFy appliquée")
+            val signingDetails = try {
+                TuneFySigningKey.details(context)
+            } catch (error: Exception) {
+                throw PatchRunException(
+                    "Impossible de préparer la clé de signature TuneFy : ${error.message}",
+                    error.stackTraceToString(),
+                    error
+                )
+            }
+            try {
+                ApkUtils.signApk(unsigned, signed, "TuneFy", signingDetails, 30)
+            } catch (error: Exception) {
+                throw PatchRunException(
+                    "La signature de l'APK par TuneFy a échoué : ${error.message}",
+                    error.stackTraceToString(),
+                    error
+                )
+            }
+            reportStage(PatchStage.SIGN, StageStatus.DONE, "Signature TuneFy appliquée")
 
-            onStage(PatchStage.VERIFY, StageStatus.RUNNING, "Vérification de la signature et du manifeste")
+            reportStage(PatchStage.VERIFY, StageStatus.RUNNING, "Vérification de la signature et du manifeste")
             val certificates = ApkUtils.verifiedSigningCertificates(signed, Build.VERSION.SDK_INT)
             val certList = certificates.orEmpty()
             if (certList.isEmpty()) {
@@ -263,7 +284,7 @@ class PatchEngine(
             }
             val sha256 = FileHasher.sha256(signed)
             append("Vérification OK · certificat $certificateSha256 · SHA-256 $sha256")
-            onStage(PatchStage.VERIFY, StageStatus.DONE, "Signature et intégrité vérifiées")
+            reportStage(PatchStage.VERIFY, StageStatus.DONE, "Signature et intégrité vérifiées")
 
             val fileName = buildFileName(analysis.versionName, selected.size)
             val artifact = store.persistedArtifact(
@@ -303,11 +324,7 @@ class PatchEngine(
             PatchRunResult(artifact, logText, logFile.absolutePath)
         } catch (error: Throwable) {
             val message = (error as? PatchRunException)?.userMessage ?: (error.message ?: "Échec du patch")
-            val current = when {
-                error is PatchRunException -> currentStage(error.userMessage)
-                else -> PatchStage.PREPARE
-            }
-            onStage(current, StageStatus.FAILED, message)
+            reportStage(activeStage, StageStatus.FAILED, message)
             append("ÉCHEC : $message")
             if (error !is PatchRunException) append(error.stackTraceToString())
             val logText = synchronized(logLock) { log.toString() }
@@ -333,12 +350,6 @@ class PatchEngine(
         }
     }
 
-    private fun currentStage(message: String): PatchStage = when {
-        message.contains("patch", ignoreCase = true) -> PatchStage.APPLY
-        message.contains("signature", ignoreCase = true) -> PatchStage.SIGN
-        message.contains("reconstruction", ignoreCase = true) -> PatchStage.REBUILD
-        else -> PatchStage.PREPARE
-    }
 
     private fun prepareInput(analysis: ApkAnalysis, runDir: File, log: (String) -> Unit): File {
         val modules = analysis.modules.filter { it.exists() }

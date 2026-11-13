@@ -124,6 +124,13 @@ méthode absente produit une erreur explicite. Le bundle a été exécuté sur l
 officiel 9.1.80.2221 (8/8 patches, reconstruction JVM) ; l'installation sur
 appareil n'a pas été testée dans cet environnement.
 
+La clé TuneFy reste un keystore BKS privé. Les providers BouncyCastle sont
+conservés par les règles ProGuard, mais le certificat est signé avec
+`Signature.getInstance("SHA256withRSA")` du JCA Android : la génération de la
+clé ne dépend plus des classes d'algorithmes BC que R8 pouvait renommer. Le
+moteur suit l'étape active au lieu de deviner l'étape d'échec à partir du texte
+de l'exception.
+
 ## Root
 
 - Détection : présence de binaires `su`, `su -c id` (timeout 8 s), `su -v`,

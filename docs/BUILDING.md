@@ -148,3 +148,4 @@ Le script :
 | `INSTALL_FAILED_INVALID_APK` (splits) | splits incomplets | utiliser l'APKM complet ou le mode root |
 | `Cleartext HTTP not permitted` | URL du dépôt en HTTP | utiliser HTTPS |
 | Build release non installable | pas de signature | fournir `keystore.properties` ou les variables d'environnement |
+| `SHA256WITHRSA for provider BC` à la signature | classes BouncyCastle renommées par R8 | conserver `org.bouncycastle.jce.provider` et `org.bouncycastle.jcajce.provider` dans ProGuard ; le certificat TuneFy est signé par le JCA Android |

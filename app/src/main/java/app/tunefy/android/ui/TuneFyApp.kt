@@ -299,6 +299,7 @@ fun TuneFyApp(viewModel: AppViewModel, startOnDownloads: Boolean = false) {
                         onOpenThemes = { navController.navigate(Routes.THEMES) },
                         onOpenDownloads = { navController.navigate(Routes.DOWNLOADS) },
                         onOpenPatches = { navController.navigate(Routes.PATCHES) },
+                        onOpenCompatibility = { navController.navigate(Routes.COMPATIBILITY) },
                         onOpenSearch = { navController.navigate(Routes.SEARCH) }
                     )
                 }

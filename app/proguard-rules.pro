@@ -22,6 +22,15 @@
 # They refer to the patcher, smali and Kotlin APIs by their original binary names, so
 # those names must survive R8. Shrinking other engine code is still allowed.
 -keep class app.morphe.patcher.** { *; }
+
+# BouncyCastle registers keystore and signature implementations by class name.
+# R8 cannot see those reflective references: without these rules the release APK
+# loses DigestSignatureSpi and TuneFy signing fails with
+# "SHA256WITHRSA for provider BC".
+-keep class org.bouncycastle.jce.provider.** { *; }
+-keep class org.bouncycastle.jcajce.provider.** { *; }
+-keep class org.bouncycastle.cert.** { *; }
+-keep class org.bouncycastle.operator.** { *; }
 -keep class com.android.tools.smali.** { *; }
 -keep class com.reandroid.** { *; }
 -keep class kotlin.** { *; }

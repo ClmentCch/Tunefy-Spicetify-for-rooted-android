@@ -3,19 +3,28 @@ package app.tunefy.android.patch
 import android.content.Context
 import android.util.Log
 import app.morphe.patcher.apk.ApkUtils
+import org.bouncycastle.asn1.DERNull
+import org.bouncycastle.asn1.pkcs.PKCSObjectIdentifiers
 import org.bouncycastle.asn1.x500.X500Name
+import org.bouncycastle.asn1.x509.AlgorithmIdentifier
 import org.bouncycastle.cert.jcajce.JcaX509CertificateConverter
 import org.bouncycastle.cert.jcajce.JcaX509v3CertificateBuilder
 import org.bouncycastle.jce.provider.BouncyCastleProvider
-import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder
+import org.bouncycastle.operator.ContentSigner
+import org.bouncycastle.operator.OperatorCreationException
+import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.FileOutputStream
+import java.io.OutputStream
 import java.math.BigInteger
+import java.security.GeneralSecurityException
 import java.security.KeyPairGenerator
 import java.security.KeyStore
 import java.security.MessageDigest
+import java.security.PrivateKey
 import java.security.SecureRandom
 import java.security.Security
+import java.security.Signature
 import java.security.cert.X509Certificate
 import java.util.Date
 
@@ -94,9 +103,12 @@ object TuneFySigningKey {
             name,
             keyPair.public
         )
-        val signer = JcaContentSignerBuilder("SHA256withRSA").setProvider(provider).build(keyPair.private)
+        // The certificate is signed with the platform JCA provider. The bundled
+        // BouncyCastle 1.77 provider is only needed for the BKS keystore; using it
+        // for SHA256withRSA made release builds depend on R8-kept BC algorithm
+        // classes and failed with "SHA256WITHRSA for provider BC".
         val certificate = JcaX509CertificateConverter().setProvider(provider)
-            .getCertificate(builder.build(signer))
+            .getCertificate(builder.build(TuneFySha256RsaSigner(keyPair.private)))
 
         val keyStore = KeyStore.getInstance("BKS", provider)
         keyStore.load(null, null)
@@ -107,5 +119,28 @@ object TuneFySigningKey {
     private fun randomPassword(): String {
         val bytes = ByteArray(32).also(SecureRandom()::nextBytes)
         return bytes.joinToString("") { "%02x".format(it) }
+    }
+
+}
+
+/** Signs the self-signed certificate with Android's default JCA provider. */
+internal class TuneFySha256RsaSigner(
+    private val privateKey: PrivateKey
+) : ContentSigner {
+    private val output = ByteArrayOutputStream()
+
+    override fun getAlgorithmIdentifier(): AlgorithmIdentifier =
+        AlgorithmIdentifier(PKCSObjectIdentifiers.sha256WithRSAEncryption, DERNull.INSTANCE)
+
+    override fun getOutputStream(): OutputStream = output
+
+    override fun getSignature(): ByteArray = try {
+        Signature.getInstance("SHA256withRSA").run {
+            initSign(privateKey)
+            update(output.toByteArray())
+            sign()
+        }
+    } catch (error: GeneralSecurityException) {
+        throw OperatorCreationException("Impossible de signer le certificat TuneFy", error)
     }
 }
