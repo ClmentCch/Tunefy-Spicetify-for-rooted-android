@@ -1,0 +1,22 @@
+{
+  "schema": 1,
+  "id": "ext-hide-podcasts",
+  "type": "extension",
+  "name": "Hide podcasts",
+  "version": "1.2.0",
+  "author": "Spicetify",
+  "license": "GPL-3.0",
+  "upstream": "https://github.com/spicetify/morphe-patches/tree/main/extensions",
+  "requiresPatch": "Spicetify extensions",
+  "patcher": "Morphe + patches Spicetify 1.2.0",
+  "compatibility": {
+    "spotify": ["9.1.80.2221"],
+    "android": "11+",
+    "architecture": "arm64-v8a"
+  },
+  "activation": "Spotify → Paramètres → Spicetify → Extensions → Hide podcasts",
+  "description": "Masque les podcasts et les épisodes dans Accueil et Recherche, ainsi que leurs filtres dans Votre bibliothèque. Un interrupteur optionnel masque aussi les livres audio, activé par défaut.",
+  "settings": {
+    "hideAudiobooks": true
+  }
+}

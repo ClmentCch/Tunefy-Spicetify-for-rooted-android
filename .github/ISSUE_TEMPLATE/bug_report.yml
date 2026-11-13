@@ -1,0 +1,52 @@
+name: Signaler un bug
+description: Un comportement inattendu dans TuneFy
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Merci de ne pas inclure de données personnelles ni de clés.
+        Pour une faille de sécurité, utilisez Security → Report a vulnerability.
+  - type: input
+    id: version
+    attributes:
+      label: Version de TuneFy
+      placeholder: 1.0.0 (Android 16, Pixel 8)
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Étapes de reproduction
+      placeholder: |
+        1. Ouvrir Catalogue
+        2. Télécharger un thème
+        3. …
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Comportement attendu
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Comportement observé
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Journaux (adb logcat)
+      render: shell
+  - type: dropdown
+    id: root
+    attributes:
+      label: Appareil rooté ?
+      options:
+        - Non
+        - Magisk
+        - KernelSU
+        - APatch

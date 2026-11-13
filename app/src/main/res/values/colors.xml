@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="tunefy_blue_light">#B9D7FF</color>
+    <color name="tunefy_blue">#78AFFF</color>
+    <color name="tunefy_blue_deep">#315B91</color>
+    <color name="tunefy_background_light">#F4F7FC</color>
+    <color name="tunefy_background_dark">#111923</color>
+    <color name="ic_launcher_background">#315B91</color>
+</resources>

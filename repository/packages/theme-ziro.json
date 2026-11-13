@@ -1,0 +1,24 @@
+{
+  "schema": 1,
+  "id": "theme-ziro",
+  "type": "theme",
+  "name": "Ziro",
+  "version": "1.0.0",
+  "author": "Spicetify community",
+  "license": "GPL-3.0",
+  "upstream": "https://github.com/spicetify/spicetify-themes/tree/master/Ziro",
+  "patcher": "Morphe + patch Theme colors",
+  "compatibility": {
+    "spotify": ["9.1.80.2221"],
+    "android": "11+"
+  },
+  "palette": {
+    "background": "#0B1A12",
+    "surface": "#122A1D",
+    "accent": "#1DB954",
+    "text": "#EAF7EF"
+  },
+  "preview": ["#0B1A12", "#1DB954", "#A7F3D0"],
+  "colorIni": "[Base]\nmain = 1DB954\nsub = A7F3D0\ntext = EAF7EF\n\n[Desktop]\nbackground = 0B1A12\nmain = 1DB954\n",
+  "instructions": "Une palette vert Spotify, idéale pour un rendu cohérent avec l'identité de l'application."
+}

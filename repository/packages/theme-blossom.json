@@ -1,0 +1,24 @@
+{
+  "schema": 1,
+  "id": "theme-blossom",
+  "type": "theme",
+  "name": "Blossom",
+  "version": "1.0.0",
+  "author": "Spicetify community",
+  "license": "GPL-3.0",
+  "upstream": "https://github.com/spicetify/spicetify-themes/tree/master/Blossom",
+  "patcher": "Morphe + patch Theme colors",
+  "compatibility": {
+    "spotify": ["9.1.80.2221"],
+    "android": "11+"
+  },
+  "palette": {
+    "background": "#1A1224",
+    "surface": "#2A1838",
+    "accent": "#E5A9C4",
+    "text": "#F7E9F0"
+  },
+  "preview": ["#2A1838", "#7B4B8A", "#E5A9C4"],
+  "colorIni": "[Base]\nmain = E5A9C4\nsub = C98DB4\ntext = F7E9F0\nmain-transition = 2s\n\n[Desktop]\nbackground = 1A1224\nmain = E5A9C4\n",
+  "instructions": "Activez le patch « Theme colors » dans Morphe, puis dans Spotify → Paramètres → Spicetify → Theme colors, choisissez la palette Blossom ou collez le color.ini fourni. Redémarrez Spotify."
+}

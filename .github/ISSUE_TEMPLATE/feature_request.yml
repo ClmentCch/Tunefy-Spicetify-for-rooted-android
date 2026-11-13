@@ -1,0 +1,34 @@
+name: Proposer une fonctionnalité
+description: Une idée pour TuneFy
+labels: [enhancement]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        TuneFy reste limité à Spotify et n'accepte aucun contournement de DRM,
+        d'abonnement ou de publicité audio.
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problème à résoudre
+    validations:
+      required: true
+  - type: textarea
+    id: solution
+    attributes:
+      label: Solution proposée
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives envisagées
+  - type: checkboxes
+    id: rules
+    attributes:
+      label: Conformité
+      options:
+        - label: La proposition concerne l'écosystème Spotify.
+          required: true
+        - label: Elle n'implique aucun contournement de DRM ou d'abonnement.
+          required: true

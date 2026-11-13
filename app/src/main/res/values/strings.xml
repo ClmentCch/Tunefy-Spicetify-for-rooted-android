@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">TuneFy</string>
+    <string name="download_channel_name">Téléchargements</string>
+    <string name="download_channel_description">Progression des téléchargements TuneFy</string>
+    <string name="install_channel_name">Installations</string>
+    <string name="install_channel_description">Résultats des installations et mises à jour</string>
+    <string name="notification_downloading">Téléchargement en cours</string>
+    <string name="notification_download_complete">Téléchargement terminé</string>
+    <string name="notification_download_failed">Téléchargement interrompu</string>
+</resources>

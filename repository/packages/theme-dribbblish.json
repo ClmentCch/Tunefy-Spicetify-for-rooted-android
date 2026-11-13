@@ -1,0 +1,24 @@
+{
+  "schema": 1,
+  "id": "theme-dribbblish",
+  "type": "theme",
+  "name": "Dribbblish",
+  "version": "1.0.0",
+  "author": "Spicetify community",
+  "license": "GPL-3.0",
+  "upstream": "https://github.com/spicetify/spicetify-themes/tree/master/Dribbblish",
+  "patcher": "Morphe + patch Theme colors",
+  "compatibility": {
+    "spotify": ["9.1.80.2221"],
+    "android": "11+"
+  },
+  "palette": {
+    "background": "#11151C",
+    "surface": "#1B2430",
+    "accent": "#4A90D9",
+    "text": "#EAF2FB"
+  },
+  "preview": ["#11151C", "#4A90D9", "#8AD1FF"],
+  "colorIni": "[Base]\nmain = 4A90D9\nsub = 8AD1FF\ntext = EAF2FB\n\n[Desktop]\nbackground = 11151C\nmain = 4A90D9\n",
+  "instructions": "Sélectionnez Dribbblish dans les couleurs de thème Spicetify, ou collez le color.ini fourni. Les variantes claire et sombre sont prises en charge."
+}

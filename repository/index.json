@@ -1,0 +1,648 @@
+{
+  "schema": 1,
+  "name": "TuneFy Repository",
+  "version": 1,
+  "updated": "2026-11-13",
+  "apps": [
+    {
+      "id": "spotify-official",
+      "name": "Spotify",
+      "packageId": "com.spotify.music",
+      "category": "spotify",
+      "developer": "Spotify AB",
+      "summary": "Le lecteur officiel Spotify pour Android, build ciblé par les patches Spicetify.",
+      "description": "Application officielle Spotify pour Android. Cette fiche documente la version 9.1.80.2221 ARM64, celle que ciblent les patches Spicetify Android 1.2.0. TuneFy ne redistribue aucun APK propriétaire : le bouton ouvre la source officielle ou vous invite à importer votre propre sauvegarde vérifiée.\n\nUtilisez cette fiche pour vérifier la version installée, la signature et la compatibilité avec les patches avant toute personnalisation.",
+      "version": "9.1.80.2221",
+      "versionCode": 145767611,
+      "architecture": "arm64-v8a",
+      "sizeBytes": 96636764,
+      "minSdk": 26,
+      "publishedAt": "2026-10-28",
+      "license": "Propriétaire",
+      "sourceUrl": "https://www.spotify.com/fr/download/android/",
+      "downloadUrl": "https://play.google.com/store/apps/details?id=com.spotify.music",
+      "downloadType": "external",
+      "spicetifyCompatible": true,
+      "morpheCompatible": true,
+      "supportedSpotifyVersions": [
+        "9.1.80.2221"
+      ],
+      "tags": [
+        "musique",
+        "streaming",
+        "officiel",
+        "arm64"
+      ],
+      "accentColor": "#1DB954",
+      "previewColors": [
+        "#0B1A12",
+        "#1DB954",
+        "#A7F3D0"
+      ],
+      "featured": true,
+      "downloadCount": 1000000000,
+      "notes": "Spotify AB. TuneFy n'héberge et ne redistribue aucun APK Spotify.",
+      "warnings": [
+        "Installez Spotify depuis Google Play ou importez votre propre APK vérifié.",
+        "Aucun contournement d'abonnement ou de protection DRM n'est proposé."
+      ],
+      "versions": [
+        {
+          "version": "9.1.80.2221",
+          "versionCode": 145767611,
+          "date": "2026-10-28",
+          "sizeBytes": 96636764,
+          "notes": "Build ARM64 ciblé par Spicetify Android 1.2.0.",
+          "supportedSpotifyVersions": [
+            "9.1.80.2221"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "spotify-spicetify",
+      "name": "Spotify + Spicetify",
+      "packageId": "com.spotify.music",
+      "category": "spotify",
+      "developer": "Communauté Spicetify",
+      "summary": "Recette de personnalisation Spotify via Morphe : thèmes, extensions et options Spicetify.",
+      "description": "Cette fiche décrit la recette officielle Spicetify Android publiée dans morphe-patches. Elle ne contient pas d'APK : c'est un ensemble de patches appliqués par Morphe sur un APK Spotify que vous fournissez.\n\nTuneFy vérifie la version de Spotify installée, affiche les patches réellement compatibles et ouvre Morphe avec la source Spicetify. Le patchage se déroule dans Morphe, sous votre contrôle.",
+      "version": "9.1.80.2221",
+      "architecture": "arm64-v8a",
+      "sizeBytes": 0,
+      "minSdk": 30,
+      "publishedAt": "2026-11-05",
+      "license": "GPL-3.0 (patches)",
+      "sourceUrl": "https://github.com/spicetify/morphe-patches",
+      "downloadUrl": "https://morphe.software/add-source?github=spicetify/morphe-patches/tree/main",
+      "downloadType": "recipe",
+      "spicetifyCompatible": true,
+      "morpheCompatible": true,
+      "supportedSpotifyVersions": [
+        "9.1.80.2221"
+      ],
+      "tags": [
+        "spicetify",
+        "morphe",
+        "patches",
+        "personnalisation"
+      ],
+      "accentColor": "#78AFFF",
+      "previewColors": [
+        "#111923",
+        "#315B91",
+        "#B9D7FF"
+      ],
+      "featured": true,
+      "downloadCount": 184000,
+      "notes": "Patches édités par Spicetify, appliqués par Morphe. Licence GPL-3.0.",
+      "warnings": [
+        "Les patches sont marqués expérimentaux par leurs auteurs.",
+        "Versions Spotify prises en charge : 9.1.80.2221 ARM64 uniquement.",
+        "Aucun contournement d'abonnement, de publicité audio ou de DRM."
+      ],
+      "versions": [
+        {
+          "version": "9.1.80.2221",
+          "date": "2026-11-05",
+          "notes": "Cible Spicetify Android 1.2.0, 8 patches.",
+          "supportedSpotifyVersions": [
+            "9.1.80.2221"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "ext-trash-bin",
+      "name": "Trash Bin",
+      "category": "extensions",
+      "developer": "Spicetify",
+      "summary": "Corbeille pour ignorer un morceau ou un artiste, avec import/export.",
+      "description": "Ajoute une corbeille dans le menu ⋯ des morceaux et des artistes. Les éléments masqués sont ignorés à chaque lecture, comme dans l'extension desktop. Les listes s'exportent et s'importent au format Spicetify.\n\nNécessite Spotify 9.1.80.2221 et le patch « Spicetify extensions » appliqué par Morphe. L'extension s'active ensuite dans Spotify → Paramètres → Spicetify → Extensions.",
+      "version": "1.2.0",
+      "sizeBytes": 843,
+      "minSdk": 30,
+      "publishedAt": "2026-11-05",
+      "license": "GPL-3.0",
+      "sourceUrl": "https://github.com/spicetify/morphe-patches/tree/main/extensions",
+      "downloadUrl": "https://raw.githubusercontent.com/ClmentCch/Tunefy-Spicetify-for-rooted-android/main/repository/packages/ext-trash-bin.json",
+      "downloadType": "direct",
+      "fileName": "ext-trash-bin.json",
+      "sha256": "fe5ed9ab5c5eddf4bdec9be5d6e5f3f1da04345fbd81c460197d8a1728b2370e",
+      "spicetifyCompatible": true,
+      "morpheCompatible": true,
+      "supportedSpotifyVersions": [
+        "9.1.80.2221"
+      ],
+      "tags": [
+        "extension",
+        "bibliothèque",
+        "corbeille"
+      ],
+      "accentColor": "#E5A9C4",
+      "downloadCount": 22100,
+      "notes": "Paquet de configuration TuneFy. L'extension elle-même est fournie par les patches Spicetify.",
+      "versions": [
+        {
+          "version": "1.2.0",
+          "date": "2026-11-05",
+          "notes": "Aligné sur Spicetify Android 1.2.0.",
+          "supportedSpotifyVersions": [
+            "9.1.80.2221"
+          ],
+          "sha256": "fe5ed9ab5c5eddf4bdec9be5d6e5f3f1da04345fbd81c460197d8a1728b2370e",
+          "sizeBytes": 843
+        }
+      ]
+    },
+    {
+      "id": "ext-hide-podcasts",
+      "name": "Hide podcasts",
+      "category": "extensions",
+      "developer": "Spicetify",
+      "summary": "Masque podcasts et épisodes dans Accueil, Recherche et Bibliothèque.",
+      "description": "Masque les podcasts et les épisodes dans Accueil et Recherche, ainsi que leurs filtres dans Votre bibliothèque. Un interrupteur optionnel masque aussi les livres audio, activé par défaut.\n\nNécessite Spotify 9.1.80.2221 et le patch « Spicetify extensions ». Activation dans Spotify → Paramètres → Spicetify → Extensions.",
+      "version": "1.2.0",
+      "sizeBytes": 804,
+      "minSdk": 30,
+      "publishedAt": "2026-11-05",
+      "license": "GPL-3.0",
+      "sourceUrl": "https://github.com/spicetify/morphe-patches/tree/main/extensions",
+      "downloadUrl": "https://raw.githubusercontent.com/ClmentCch/Tunefy-Spicetify-for-rooted-android/main/repository/packages/ext-hide-podcasts.json",
+      "downloadType": "direct",
+      "fileName": "ext-hide-podcasts.json",
+      "sha256": "2aa7a5a32c0f80efccb8c006a546272dff0cb21119f6bc2bdb071892f438daf2",
+      "spicetifyCompatible": true,
+      "morpheCompatible": true,
+      "supportedSpotifyVersions": [
+        "9.1.80.2221"
+      ],
+      "tags": [
+        "extension",
+        "podcasts",
+        "interface"
+      ],
+      "accentColor": "#F2B84B",
+      "downloadCount": 15800,
+      "versions": [
+        {
+          "version": "1.2.0",
+          "date": "2026-11-05",
+          "notes": "Options livres audio incluses.",
+          "supportedSpotifyVersions": [
+            "9.1.80.2221"
+          ],
+          "sha256": "2aa7a5a32c0f80efccb8c006a546272dff0cb21119f6bc2bdb071892f438daf2",
+          "sizeBytes": 804
+        }
+      ]
+    },
+    {
+      "id": "ext-spicetify-bundle",
+      "name": "Spicetify extensions",
+      "category": "extensions",
+      "developer": "Spicetify",
+      "summary": "Le paquet complet des extensions Android Spicetify, prêt à configurer.",
+      "description": "Regroupe les extensions Android officielles de Spicetify : Trash Bin, Hide podcasts, thèmes et options de personnalisation. Chaque extension reste désactivée jusqu'à son activation explicite dans Spotify.\n\nCe paquet TuneFy conserve vos préférences et vérifie la compatibilité avec la version Spotify installée avant de vous laisser l'activer dans Morphe.",
+      "version": "1.2.0",
+      "sizeBytes": 867,
+      "minSdk": 30,
+      "publishedAt": "2026-11-05",
+      "license": "GPL-3.0",
+      "sourceUrl": "https://github.com/spicetify/morphe-patches/tree/main/extensions",
+      "downloadUrl": "https://raw.githubusercontent.com/ClmentCch/Tunefy-Spicetify-for-rooted-android/main/repository/packages/ext-spicetify-bundle.json",
+      "downloadType": "direct",
+      "fileName": "ext-spicetify-bundle.json",
+      "sha256": "9b63c85f1f62fdf8b46c06e728bb5da6b419cc1045b9a0aa45ab1a784dc7dedd",
+      "spicetifyCompatible": true,
+      "morpheCompatible": true,
+      "supportedSpotifyVersions": [
+        "9.1.80.2221"
+      ],
+      "tags": [
+        "extension",
+        "pack",
+        "spicetify"
+      ],
+      "accentColor": "#78AFFF",
+      "featured": true,
+      "downloadCount": 30500,
+      "versions": [
+        {
+          "version": "1.2.0",
+          "date": "2026-11-05",
+          "notes": "Bundle des extensions Android Spicetify.",
+          "supportedSpotifyVersions": [
+            "9.1.80.2221"
+          ],
+          "sha256": "9b63c85f1f62fdf8b46c06e728bb5da6b419cc1045b9a0aa45ab1a784dc7dedd",
+          "sizeBytes": 867
+        }
+      ]
+    },
+    {
+      "id": "theme-blossom",
+      "name": "Blossom",
+      "category": "themes",
+      "developer": "Spicetify community",
+      "summary": "Rose poudré et violet profond, doux pour les sessions du soir.",
+      "description": "Palette Blossom pour Spotify Android : fond violet profond, surfaces prune et accent rose poudré. Le paquet contient un color.ini prêt à coller dans les couleurs de thème Spicetify, ainsi que la palette utilisée pour l'aperçu TuneFy.\n\nLe patch « Theme colors » de Morphe doit être actif. Redémarrez Spotify après application.",
+      "version": "1.0.0",
+      "sizeBytes": 899,
+      "minSdk": 30,
+      "publishedAt": "2026-11-10",
+      "license": "GPL-3.0",
+      "sourceUrl": "https://github.com/spicetify/spicetify-themes/tree/master/Blossom",
+      "downloadUrl": "https://raw.githubusercontent.com/ClmentCch/Tunefy-Spicetify-for-rooted-android/main/repository/packages/theme-blossom.json",
+      "downloadType": "direct",
+      "fileName": "theme-blossom.json",
+      "sha256": "68721527a3af43afa31708dcf6ed9336bc9ed241af564bdb079e75b6cbc260e8",
+      "spicetifyCompatible": true,
+      "morpheCompatible": true,
+      "supportedSpotifyVersions": [
+        "9.1.80.2221"
+      ],
+      "tags": [
+        "thème",
+        "rose",
+        "sombre"
+      ],
+      "accentColor": "#E5A9C4",
+      "previewColors": [
+        "#2A1838",
+        "#7B4B8A",
+        "#E5A9C4"
+      ],
+      "featured": true,
+      "downloadCount": 9400,
+      "versions": [
+        {
+          "version": "1.0.0",
+          "date": "2026-11-10",
+          "notes": "Palette alignée sur le thème desktop Blossom.",
+          "supportedSpotifyVersions": [
+            "9.1.80.2221"
+          ],
+          "sha256": "68721527a3af43afa31708dcf6ed9336bc9ed241af564bdb079e75b6cbc260e8",
+          "sizeBytes": 899
+        }
+      ]
+    },
+    {
+      "id": "theme-dribbblish",
+      "name": "Dribbblish",
+      "category": "themes",
+      "developer": "Spicetify community",
+      "summary": "Bleu nuit et cyan lumineux, inspiré de Dribbble.",
+      "description": "Dribbblish transpose sur Android une palette bleu nuit avec accents cyan. Fond très sombre, surfaces bleutées, texte clair et lisible.\n\nNécessite le patch Theme colors de Morphe. Le color.ini fourni reprend les couleurs principales du thème desktop.",
+      "version": "1.0.0",
+      "sizeBytes": 838,
+      "minSdk": 30,
+      "publishedAt": "2026-11-09",
+      "license": "GPL-3.0",
+      "sourceUrl": "https://github.com/spicetify/spicetify-themes/tree/master/Dribbblish",
+      "downloadUrl": "https://raw.githubusercontent.com/ClmentCch/Tunefy-Spicetify-for-rooted-android/main/repository/packages/theme-dribbblish.json",
+      "downloadType": "direct",
+      "fileName": "theme-dribbblish.json",
+      "sha256": "b0952ef35a25756620379bff4aed1bd7d3a392d849a5209b3315366b4f82baaa",
+      "spicetifyCompatible": true,
+      "morpheCompatible": true,
+      "supportedSpotifyVersions": [
+        "9.1.80.2221"
+      ],
+      "tags": [
+        "thème",
+        "bleu",
+        "sombre"
+      ],
+      "accentColor": "#4A90D9",
+      "previewColors": [
+        "#11151C",
+        "#4A90D9",
+        "#8AD1FF"
+      ],
+      "downloadCount": 7600,
+      "versions": [
+        {
+          "version": "1.0.0",
+          "date": "2026-11-09",
+          "notes": "Variantes claire et sombre documentées.",
+          "supportedSpotifyVersions": [
+            "9.1.80.2221"
+          ],
+          "sha256": "b0952ef35a25756620379bff4aed1bd7d3a392d849a5209b3315366b4f82baaa",
+          "sizeBytes": 838
+        }
+      ]
+    },
+    {
+      "id": "theme-sleek",
+      "name": "Sleek",
+      "category": "themes",
+      "developer": "Spicetify community",
+      "summary": "Minimalisme OLED, bleu électrique et noir profond.",
+      "description": "Sleek privilégie le contraste et les noirs purs pour les écrans OLED. Accent bleu électrique, surfaces quasi noires, texte dense.\n\nNécessite le patch Theme colors. Idéal sur Pixel et appareils à écran OLED.",
+      "version": "1.0.0",
+      "sizeBytes": 779,
+      "minSdk": 30,
+      "publishedAt": "2026-11-08",
+      "license": "GPL-3.0",
+      "sourceUrl": "https://github.com/spicetify/spicetify-themes/tree/master/Sleek",
+      "downloadUrl": "https://raw.githubusercontent.com/ClmentCch/Tunefy-Spicetify-for-rooted-android/main/repository/packages/theme-sleek.json",
+      "downloadType": "direct",
+      "fileName": "theme-sleek.json",
+      "sha256": "1362ff1cb2076af293032b04ace0cf5de0e1597252767815a104ed3e0f7d6997",
+      "spicetifyCompatible": true,
+      "morpheCompatible": true,
+      "supportedSpotifyVersions": [
+        "9.1.80.2221"
+      ],
+      "tags": [
+        "thème",
+        "oled",
+        "minimal"
+      ],
+      "accentColor": "#5C7CFA",
+      "previewColors": [
+        "#0E1116",
+        "#5C7CFA",
+        "#B9D7FF"
+      ],
+      "downloadCount": 11200,
+      "versions": [
+        {
+          "version": "1.0.0",
+          "date": "2026-11-08",
+          "notes": "Noirs purs pour écrans OLED.",
+          "supportedSpotifyVersions": [
+            "9.1.80.2221"
+          ],
+          "sha256": "1362ff1cb2076af293032b04ace0cf5de0e1597252767815a104ed3e0f7d6997",
+          "sizeBytes": 779
+        }
+      ]
+    },
+    {
+      "id": "theme-ziro",
+      "name": "Ziro",
+      "category": "themes",
+      "developer": "Spicetify community",
+      "summary": "Le vert Spotify décliné en palette sombre cohérente.",
+      "description": "Ziro reprend l'identité verte de Spotify et l'accorde à des surfaces forestières. Parfait si vous voulez un thème qui reste proche de l'application d'origine.",
+      "version": "1.0.0",
+      "sizeBytes": 764,
+      "minSdk": 30,
+      "publishedAt": "2026-11-07",
+      "license": "GPL-3.0",
+      "sourceUrl": "https://github.com/spicetify/spicetify-themes/tree/master/Ziro",
+      "downloadUrl": "https://raw.githubusercontent.com/ClmentCch/Tunefy-Spicetify-for-rooted-android/main/repository/packages/theme-ziro.json",
+      "downloadType": "direct",
+      "fileName": "theme-ziro.json",
+      "sha256": "93fae7741e95bf2d0f4dcd9d3c1dab599446a0157264e404ddcb639a5dab07bb",
+      "spicetifyCompatible": true,
+      "morpheCompatible": true,
+      "supportedSpotifyVersions": [
+        "9.1.80.2221"
+      ],
+      "tags": [
+        "thème",
+        "vert",
+        "spotify"
+      ],
+      "accentColor": "#1DB954",
+      "previewColors": [
+        "#0B1A12",
+        "#1DB954",
+        "#A7F3D0"
+      ],
+      "downloadCount": 6800,
+      "versions": [
+        {
+          "version": "1.0.0",
+          "date": "2026-11-07",
+          "notes": "Palette verte cohérente avec Spotify.",
+          "supportedSpotifyVersions": [
+            "9.1.80.2221"
+          ],
+          "sha256": "93fae7741e95bf2d0f4dcd9d3c1dab599446a0157264e404ddcb639a5dab07bb",
+          "sizeBytes": 764
+        }
+      ]
+    },
+    {
+      "id": "theme-matte",
+      "name": "Matte",
+      "category": "themes",
+      "developer": "Spicetify community",
+      "summary": "Gris mat, sans saturation, pour réduire la fatigue visuelle.",
+      "description": "Matte supprime les couleurs vives au profit de gris neutres et d'un texte doux. Une palette reposante pour les longues sessions d'écoute.",
+      "version": "1.0.0",
+      "sizeBytes": 746,
+      "minSdk": 30,
+      "publishedAt": "2026-11-06",
+      "license": "GPL-3.0",
+      "sourceUrl": "https://github.com/spicetify/spicetify-themes/tree/master/Matte",
+      "downloadUrl": "https://raw.githubusercontent.com/ClmentCch/Tunefy-Spicetify-for-rooted-android/main/repository/packages/theme-matte.json",
+      "downloadType": "direct",
+      "fileName": "theme-matte.json",
+      "sha256": "dd9b645bd3eff344c4039182dc7e483ef9c2a6810ff518f46061aabbf4309803",
+      "spicetifyCompatible": true,
+      "morpheCompatible": true,
+      "supportedSpotifyVersions": [
+        "9.1.80.2221"
+      ],
+      "tags": [
+        "thème",
+        "gris",
+        "sobre"
+      ],
+      "accentColor": "#9AA0A6",
+      "previewColors": [
+        "#1C1C1C",
+        "#5F6368",
+        "#DADCE0"
+      ],
+      "downloadCount": 5200,
+      "versions": [
+        {
+          "version": "1.0.0",
+          "date": "2026-11-06",
+          "notes": "Palette neutre et sobre.",
+          "supportedSpotifyVersions": [
+            "9.1.80.2221"
+          ],
+          "sha256": "dd9b645bd3eff344c4039182dc7e483ef9c2a6810ff518f46061aabbf4309803",
+          "sizeBytes": 746
+        }
+      ]
+    },
+    {
+      "id": "theme-nightlight",
+      "name": "Nightlight",
+      "category": "themes",
+      "developer": "Spicetify community",
+      "summary": "Bleu nuit et ambre, contraste élevé pour la lecture nocturne.",
+      "description": "Nightlight combine un fond bleu nuit profond, des surfaces indigo et un accent ambré. Pensé pour rester lisible dans l'obscurité sans agresser les yeux.",
+      "version": "1.0.0",
+      "sizeBytes": 772,
+      "minSdk": 30,
+      "publishedAt": "2026-11-05",
+      "license": "GPL-3.0",
+      "sourceUrl": "https://github.com/spicetify/spicetify-themes/tree/master/Nightlight",
+      "downloadUrl": "https://raw.githubusercontent.com/ClmentCch/Tunefy-Spicetify-for-rooted-android/main/repository/packages/theme-nightlight.json",
+      "downloadType": "direct",
+      "fileName": "theme-nightlight.json",
+      "sha256": "ad7647dc2a870700065f21c4a22628b5c8bb4e06c5f4e51b461dccb42cf1552b",
+      "spicetifyCompatible": true,
+      "morpheCompatible": true,
+      "supportedSpotifyVersions": [
+        "9.1.80.2221"
+      ],
+      "tags": [
+        "thème",
+        "ambre",
+        "nuit"
+      ],
+      "accentColor": "#F2B84B",
+      "previewColors": [
+        "#0B1220",
+        "#5B8DD6",
+        "#F2B84B"
+      ],
+      "downloadCount": 4100,
+      "versions": [
+        {
+          "version": "1.0.0",
+          "date": "2026-11-05",
+          "notes": "Accent ambré et surfaces indigo.",
+          "supportedSpotifyVersions": [
+            "9.1.80.2221"
+          ],
+          "sha256": "ad7647dc2a870700065f21c4a22628b5c8bb4e06c5f4e51b461dccb42cf1552b",
+          "sizeBytes": 772
+        }
+      ]
+    },
+    {
+      "id": "patches-spicetify",
+      "name": "Patches Spicetify Android",
+      "category": "patches",
+      "developer": "Spicetify",
+      "summary": "Bundle officiel des patches Spicetify pour Morphe, version 1.2.0.",
+      "description": "Bundle .mpp officiel publié par spicetify/morphe-patches. TuneFy vérifie son empreinte SHA-256 avant de l'ajouter à la bibliothèque, puis vous pouvez l'ouvrir avec Morphe.\n\nLa liste de compatibilité détaillée est consultable dans l'onglet Patches. Les patches ciblent Spotify 9.1.80.2221 ARM64 et sont marqués expérimentaux.",
+      "version": "1.2.0",
+      "architecture": "arm64-v8a",
+      "sizeBytes": 1022583,
+      "minSdk": 30,
+      "publishedAt": "2026-11-05",
+      "license": "GPL-3.0",
+      "sourceUrl": "https://github.com/spicetify/morphe-patches",
+      "downloadUrl": "https://github.com/spicetify/morphe-patches/releases/download/v1.2.0/patches-1.2.0.mpp",
+      "downloadType": "direct",
+      "fileName": "patches-1.2.0.mpp",
+      "sha256": "1037bd6dd7effc40d904bcf270d8c4edd2e0379fc323d5442200ad71a939e2d7",
+      "spicetifyCompatible": true,
+      "morpheCompatible": true,
+      "supportedSpotifyVersions": [
+        "9.1.80.2221"
+      ],
+      "tags": [
+        "patches",
+        "morphe",
+        "bundle"
+      ],
+      "accentColor": "#78AFFF",
+      "featured": true,
+      "downloadCount": 14200,
+      "versions": [
+        {
+          "version": "1.2.0",
+          "date": "2026-11-05",
+          "sizeBytes": 1022583,
+          "notes": "8 patches, cible Spotify 9.1.80.2221.",
+          "supportedSpotifyVersions": [
+            "9.1.80.2221"
+          ],
+          "sha256": "1037bd6dd7effc40d904bcf270d8c4edd2e0379fc323d5442200ad71a939e2d7"
+        }
+      ]
+    },
+    {
+      "id": "tool-morphe-manager",
+      "name": "Morphe",
+      "category": "tools",
+      "developer": "Morphe",
+      "summary": "Le patcheur Android qui applique les patches Spicetify à Spotify.",
+      "description": "Morphe est l'application de patchage qui applique les patches Spicetify à un APK Spotify que vous fournissez. TuneFy prépare la source et la sélection, puis vous ouvre Morphe.\n\nTuneFy n'applique jamais les patches lui-même et ne contourne aucune protection : le résultat dépend de Morphe et des patches communautaires.",
+      "version": "Dernière",
+      "sizeBytes": 0,
+      "minSdk": 30,
+      "publishedAt": "2026-11-05",
+      "license": "Open source",
+      "sourceUrl": "https://morphe.software/",
+      "downloadUrl": "https://morphe.software/",
+      "downloadType": "external",
+      "spicetifyCompatible": true,
+      "morpheCompatible": true,
+      "supportedSpotifyVersions": [
+        "9.1.80.2221"
+      ],
+      "tags": [
+        "outil",
+        "patcheur",
+        "morphe"
+      ],
+      "accentColor": "#B9D7FF",
+      "downloadCount": 98000,
+      "warnings": [
+        "Installez Morphe depuis sa source officielle morphe.software."
+      ]
+    },
+    {
+      "id": "tool-spicetify-cli",
+      "name": "Spicetify CLI",
+      "category": "tools",
+      "developer": "Spicetify",
+      "summary": "Outil desktop de personnalisation Spotify : thèmes, extensions, CSS.",
+      "description": "Spicetify CLI modifie le client Spotify desktop (Windows, macOS, Linux). Utile pour préparer vos thèmes et extensions avant de les retrouver sur Android.\n\nTuneFy référence ce projet open source mais ne l'installe pas : c'est un outil pour ordinateur.",
+      "version": "Dernière",
+      "sizeBytes": 0,
+      "minSdk": 30,
+      "publishedAt": "2026-11-01",
+      "license": "LGPL-2.1",
+      "sourceUrl": "https://github.com/spicetify/cli",
+      "downloadUrl": "https://github.com/spicetify/cli",
+      "downloadType": "external",
+      "tags": [
+        "outil",
+        "desktop",
+        "cli"
+      ],
+      "accentColor": "#A7F3D0",
+      "downloadCount": 62000
+    },
+    {
+      "id": "tool-spicetify-marketplace",
+      "name": "Spicetify Marketplace",
+      "category": "tools",
+      "developer": "Spicetify",
+      "summary": "Marketplace desktop pour parcourir thèmes et extensions Spicetify.",
+      "description": "Le Marketplace Spicetify est l'interface de découverte des thèmes et extensions pour Spotify desktop. TuneFy en reprend les catalogues compatibles Android, avec vérification de version.",
+      "version": "Dernière",
+      "sizeBytes": 0,
+      "minSdk": 30,
+      "publishedAt": "2026-10-30",
+      "license": "MIT",
+      "sourceUrl": "https://github.com/spicetify/marketplace",
+      "downloadUrl": "https://github.com/spicetify/marketplace",
+      "downloadType": "external",
+      "tags": [
+        "outil",
+        "marketplace",
+        "desktop"
+      ],
+      "accentColor": "#F2B84B",
+      "downloadCount": 47000
+    }
+  ]
+}
