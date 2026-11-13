@@ -130,7 +130,7 @@ principes de navigation de F-Droid avec l'identité visuelle propre à TuneFy :
 
 ## Installation de l'APK
 
-1. Téléchargez `TuneFy-1.3.0-release.apk` depuis la page
+1. Téléchargez `TuneFy-2.0.0-release.apk` depuis la page
    [Releases](https://github.com/ClmentCch/Tunefy-Spicetify-for-rooted-android/releases).
 2. Vérifiez l'empreinte SHA-256 publiée dans les notes de version.
 3. Autorisez l'installation depuis cette source si Android le demande.
@@ -302,21 +302,26 @@ La cause était dans `DexIndexer` : le flux d'une entrée `ZipFile` ne supporte 
 analysé et déclaré compatible ; une reconstruction ARSCLib conserve ses 17 DEX,
 ses 48 bibliothèques natives et son manifeste.
 
-### Correction `SettingsPatch.settingsPatch`
+### Correction du crash à l'application des patches (2.0.0)
 
-Les erreurs `Spotify settings ABI changed: Lcom/spotify/music/SpotifyApplication;`
-et `missing Lp/rih1;` venaient d'un digest de classes obsolète dans le bundle
-1.1.1 et d'une résolution directe de `onCreate`. Le bundle TuneFy 1.2.0 :
+Les erreurs `The patch ... depends on "ExtensionsPatch.playerBridgePatch", which
+raised an exception` venaient des empreintes ABI du bundle 1.2.0 : elles
+hashaient les octets DEX d'anciennes classes. Le dexlib2 récent utilisé par
+Morphe Patcher 2.x ne retrouvait donc plus les pins des patches Settings et
+Extensions sur l'APK Spotify officiel.
 
-1. ne bloque plus sur le digest obsolète ;
-2. résout `SpotifyApplication.onCreate` via la chaîne de superclasses ;
-3. conserve les vérifications ABI/DEX réelles et échoue explicitement si une
-   classe ou méthode manque.
+Le bundle intégré est reconstruit depuis le correctif upstream
+[`spicetify/morphe-patches@6741682`](https://github.com/spicetify/morphe-patches/commit/6741682b28f5c120e7e995537b49705a5d8789ec).
+Les empreintes décrivent maintenant la forme sémantique des classes (méthodes,
+champs, hiérarchie) au lieu de hasher leurs anciens octets. Les vraies
+vérifications de fingerprints restent actives : une classe absente échoue
+toujours explicitement.
 
-Le diff source est conservé dans
-[`third_party/spicetify-settings-abi.patch`](third_party/spicetify-settings-abi.patch),
-conformément à la GPL-3.0. Les empreintes du bundle sont vérifiées avant chaque
-utilisation (`bdc38eadd482228c5c520765f7027d2c68d1d903e8d76c4536d225d2b3470977`).
+Le bundle a été exécuté sur l'APK officiel 9.1.80.2221 dans un harnais JVM :
+les 8 patches s'appliquent, l'APK est reconstruit (154 529 679 octets). Aucun
+appareil Android n'était disponible pour tester l'installation ; ce test reste
+à faire sur un téléphone. L'empreinte SHA-256 du bundle est vérifiée avant
+chaque utilisation (`85c934b567272b2205ac7022a03c03998a2ccb312146e7fa4cca12ed659fda1f`).
 
 ### Pipeline
 

@@ -23,7 +23,8 @@ Fichier publié dans la release TuneFy [`Spotify-Apk`](https://github.com/Clment
 - `aapt2 dump badging` : manifeste lisible, package/version conformes.
 - `apksigner verify` : signature Spotify valide.
 - `DexIndexer` : 97 135 classes lues, profil 9.1.80.2221 compatible.
-- Les huit patches du bundle 1.2.0 ont leurs classes requises dans ce DEX.
+- Les huit patches du bundle 1.2.0 ont leurs classes requises dans ce DEX et
+  s'appliquent tous dans le harnais JVM de vérification de la 2.0.0.
 - Reconstruction ARSCLib : 17 DEX et 48 bibliothèques conservés, manifeste
   `com.spotify.music` / versionCode `145767611` préservé, 150 486 785 octets.
 

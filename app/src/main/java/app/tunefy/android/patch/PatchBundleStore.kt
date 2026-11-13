@@ -14,7 +14,7 @@ import java.util.jar.JarFile
 object PatchBundleStore {
 
     const val ASSET = "patches/patches-1.2.0-tunefy.mpp"
-    const val EXPECTED_SHA256 = "bdc38eadd482228c5c520765f7027d2c68d1d903e8d76c4536d225d2b3470977"
+    const val EXPECTED_SHA256 = "85c934b567272b2205ac7022a03c03998a2ccb312146e7fa4cca12ed659fda1f"
     const val VERSION = "1.2.0"
 
     private val lock = Any()

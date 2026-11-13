@@ -4,6 +4,37 @@ Toutes les évolutions notables de TuneFy sont documentées ici.
 Le format suit [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/) et le
 versionnage sémantique.
 
+## [2.0.0] - 2026-11-13
+
+### Corrigé
+
+- **Crash « Application des patches » avec les patches Spicetify** : les
+  empreintes ABI du bundle 1.2.0 hashaient les octets DEX d'anciennes classes.
+  Le dexlib2 récent de Morphe Patcher 2.x ne retrouvait plus les pins Settings
+  et Extensions, et `playerBridgePatch` levait une exception avant même de
+  patcher. Le bundle est reconstruit depuis le correctif upstream
+  `spicetify/morphe-patches@6741682`, qui décrit la forme sémantique des
+  classes. Les fingerprints réels restent vérifiés.
+- Le bundle est exécuté sur l'APK officiel 9.1.80.2221 dans un harnais JVM :
+  **8/8 patches appliqués**, APK reconstruit (154 529 679 octets). Aucun
+  appareil Android n'était connecté pour tester l'installation finale.
+
+### Modifié
+
+- **Écran APK Patcher** : barre d'action fixe avec le nombre de patches et le
+  bouton de génération toujours accessible, sélection rapide « Tout » /
+  « Défaut », compteur de patches compatibles et carte d'erreur complète avec
+  accès direct aux journaux. Les échecs de patch ne sont plus masqués par un
+  toast tronqué.
+- Version `2.0.0` (versionCode 5).
+
+### Limite
+
+- Installation et lancement de l'APK patché sur un Spotify officiel non testés
+  sans appareil Android dans cet environnement.
+
+[2.0.0]: https://github.com/ClmentCch/Tunefy-Spicetify-for-rooted-android/releases/tag/v2.0.0
+
 ## [1.3.0] - 2026-11-13
 
 ### Corrigé

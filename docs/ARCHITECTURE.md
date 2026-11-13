@@ -115,10 +115,14 @@ URI / APK / APKS / XAPK / APK officiel téléchargé par TuneFy
        → GeneratedPatch + journal + historique
 ```
 
-Le bundle 1.2.0 est une version TuneFy du bundle Spicetify 1.2.0 : le digest de
-classes obsolète a été retiré et `SpotifyApplication.onCreate` est résolu via la
-chaîne de superclasses. Les contrôles ABI et les fingerprints du patcheur ne sont
-pas contournés ; une classe ou une méthode absente produit une erreur explicite.
+Le bundle 1.2.0 est reconstruit depuis le commit upstream
+`spicetify/morphe-patches@6741682`. Ses empreintes ABI décrivent la forme
+sémantique des classes au lieu de hasher leurs anciens octets DEX, ce qui les
+rend compatibles avec le dexlib2 récent de Morphe Patcher 2.x. Les contrôles ABI
+et les fingerprints du patcheur ne sont pas contournés : une classe ou une
+méthode absente produit une erreur explicite. Le bundle a été exécuté sur l'APK
+officiel 9.1.80.2221 (8/8 patches, reconstruction JVM) ; l'installation sur
+appareil n'a pas été testée dans cet environnement.
 
 ## Root
 

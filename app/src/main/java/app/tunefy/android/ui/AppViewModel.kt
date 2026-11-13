@@ -17,6 +17,7 @@ import app.tunefy.android.data.model.DownloadTask
 import app.tunefy.android.data.model.DownloadType
 import app.tunefy.android.data.model.HistoryEntry
 import app.tunefy.android.data.model.InstalledItem
+import app.tunefy.android.data.model.PatchDefinition
 import app.tunefy.android.data.model.RootStatus
 import app.tunefy.android.data.model.SpotifyStatus
 import app.tunefy.android.data.model.ThemeMode
@@ -535,6 +536,25 @@ class AppViewModel(private val container: AppContainer) : ViewModel() {
         }
     }
 
+    /** Selects every patch that the compatibility check marked as usable. */
+    fun selectAllPatches() = updatePatchSelection { true }
+
+    /** Restores the selection exported by the bundle as the recommended default. */
+    fun resetPatchSelection() = updatePatchSelection { it.default }
+
+    private fun updatePatchSelection(include: (PatchDefinition) -> Boolean) {
+        _patchUi.update { state ->
+            if (state.running || state.analyzing) return@update state
+            val availability = state.analysis?.patchAvailability.orEmpty()
+            val names = patchBundle.value?.patches.orEmpty()
+                .filter(include)
+                .filter { availability[it.name]?.enabled != false }
+                .map { it.name }
+                .toSet()
+            state.copy(selected = names)
+        }
+    }
+
     fun startPatch() {
         val state = _patchUi.value
         val analysis = state.analysis ?: run {
@@ -590,12 +610,10 @@ class AppViewModel(private val container: AppContainer) : ViewModel() {
                         log = (it.log + "\n" + error.detail).takeLast(24_000)
                     )
                 }
-                toast("Échec du patch : ${error.userMessage}")
             } catch (error: Exception) {
                 _patchUi.update {
                     it.copy(running = false, error = error.message ?: "Échec du patch")
                 }
-                toast("Échec du patch : ${error.message}")
             }
         }
     }

@@ -4,6 +4,7 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -18,6 +19,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.ArrowForward
 import androidx.compose.material.icons.rounded.CheckCircle
@@ -64,7 +66,6 @@ import app.tunefy.android.patch.SpotifyOfficialApk
 import app.tunefy.android.patch.StageProgress
 import app.tunefy.android.patch.StageStatus
 import app.tunefy.android.ui.AppViewModel
-import app.tunefy.android.ui.components.BottomContentPadding
 import app.tunefy.android.ui.components.CompatBadge
 import app.tunefy.android.ui.components.ErrorBanner
 import app.tunefy.android.ui.components.InfoPill
@@ -97,11 +98,12 @@ fun ApkPatcherScreen(
         saveTarget = null
     }
 
-    LazyColumn(
-        modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(start = 18.dp, end = 18.dp, top = 8.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
-    ) {
+    Box(modifier = Modifier.fillMaxSize()) {
+        LazyColumn(
+            modifier = Modifier.fillMaxSize(),
+            contentPadding = PaddingValues(start = 18.dp, end = 18.dp, top = 8.dp, bottom = 104.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
         item { PatcherHero() }
 
         item {
@@ -125,7 +127,7 @@ fun ApkPatcherScreen(
             item { AnalysisCard(analysis = analysis, onOpenCompatibility = onOpenCompatibility) }
         }
 
-        state.error?.let { error ->
+        state.error?.takeIf { state.stages.none { stage -> stage.status == StageStatus.FAILED } }?.let { error ->
             item { ErrorBanner(message = error) }
         }
 
@@ -135,8 +137,18 @@ fun ApkPatcherScreen(
                 SectionHeader(
                     title = "Catalogue de patches",
                     subtitle = "${state.selected.size} sélectionné${if (state.selected.size > 1) "s" else ""} · " +
-                        "${patches.count { state.analysis?.patchAvailability?.get(it.name)?.enabled != false }} disponibles"
+                        "${patches.count { state.analysis?.patchAvailability?.get(it.name)?.enabled != false }} compatibles"
                 )
+            }
+            if (patches.isNotEmpty()) {
+                item {
+                    SelectionToolbar(
+                        available = patches.count { state.analysis?.patchAvailability?.get(it.name)?.enabled != false },
+                        enabled = !state.running,
+                        onSelectAll = viewModel::selectAllPatches,
+                        onReset = viewModel::resetPatchSelection
+                    )
+                }
             }
             if (patches.isEmpty()) {
                 item { LoadingState(message = "Chargement du catalogue Spicetify…") }
@@ -152,28 +164,22 @@ fun ApkPatcherScreen(
                 }
             }
 
-            item {
-                Button(
-                    onClick = viewModel::startPatch,
-                    enabled = state.canStart,
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(50)
-                ) {
-                    Icon(Icons.Rounded.Memory, contentDescription = null, modifier = Modifier.size(18.dp))
-                    Spacer(Modifier.width(8.dp))
-                    Text(if (state.running) "Patch en cours…" else "Créer l'APK patché")
-                }
-            }
-
-            item {
-                if (state.analysis?.signatureWillChange == true) {
-                    SignatureWarning(analysis = state.analysis!!)
-                }
+            if (state.analysis?.signatureWillChange == true) {
+                item { SignatureWarning(analysis = state.analysis!!) }
             }
         }
 
         if (state.running || state.stages.any { it.status != StageStatus.PENDING }) {
             item { ProgressCard(state = state) }
+        }
+
+        if (state.error != null && state.stages.any { it.status == StageStatus.FAILED }) {
+            item {
+                PatchFailureCard(
+                    message = state.error.orEmpty(),
+                    onOpenDiagnostics = onOpenDiagnostics
+                )
+            }
         }
 
         state.result?.let { result ->
@@ -201,7 +207,148 @@ fun ApkPatcherScreen(
             )
         }
 
-        item { BottomContentPadding() }
+        }
+
+        if (state.analysis?.compatible == true) {
+            PatchActionBar(
+                state = state,
+                onCreate = viewModel::startPatch,
+                modifier = Modifier.align(Alignment.BottomCenter)
+            )
+        }
+    }
+}
+
+@Composable
+private fun SelectionToolbar(
+    available: Int,
+    enabled: Boolean,
+    onSelectAll: () -> Unit,
+    onReset: () -> Unit
+) {
+    Surface(
+        shape = RoundedCornerShape(14.dp),
+        color = MaterialTheme.colorScheme.surfaceContainerLow
+    ) {
+        Row(
+            modifier = Modifier.padding(start = 14.dp, end = 4.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                "$available compatibles",
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            Spacer(Modifier.weight(1f))
+            TextButton(
+                onClick = onSelectAll,
+                enabled = enabled,
+                contentPadding = PaddingValues(horizontal = 10.dp)
+            ) {
+                Text("Tout", style = MaterialTheme.typography.labelMedium)
+            }
+            TextButton(
+                onClick = onReset,
+                enabled = enabled,
+                contentPadding = PaddingValues(horizontal = 10.dp)
+            ) {
+                Text("Défaut", style = MaterialTheme.typography.labelMedium)
+            }
+        }
+    }
+}
+
+@Composable
+private fun PatchActionBar(
+    state: PatchUiState,
+    onCreate: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Surface(
+        modifier = modifier.fillMaxWidth(),
+        color = MaterialTheme.colorScheme.surface,
+        tonalElevation = 3.dp,
+        shadowElevation = 12.dp
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = 18.dp, vertical = 10.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                Text(
+                    "${state.selected.size} patch${if (state.selected.size == 1) "" else "s"} sélectionné${if (state.selected.size == 1) "" else "s"}",
+                    style = MaterialTheme.typography.titleSmall
+                )
+                Text(
+                    when {
+                        state.running -> "Application en cours…"
+                        state.error != null -> "Échec — consultez le détail"
+                        state.selected.isEmpty() -> "Sélectionnez au moins un patch"
+                        else -> "Prêt à générer"
+                    },
+                    style = MaterialTheme.typography.labelSmall,
+                    color = if (state.selected.isEmpty() || state.error != null) MaterialTheme.colorScheme.error
+                    else MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+            Button(
+                onClick = onCreate,
+                enabled = state.canStart,
+                shape = RoundedCornerShape(50)
+            ) {
+                Icon(Icons.Rounded.Memory, contentDescription = null, modifier = Modifier.size(17.dp))
+                Spacer(Modifier.width(6.dp))
+                Text(
+                    when {
+                        state.running -> "En cours"
+                        state.error != null -> "Réessayer"
+                        else -> "Créer l'APK"
+                    }
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun PatchFailureCard(message: String, onOpenDiagnostics: () -> Unit) {
+    Surface(
+        shape = RoundedCornerShape(18.dp),
+        color = MaterialTheme.colorScheme.errorContainer,
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.error.copy(alpha = 0.3f))
+    ) {
+        Column(
+            modifier = Modifier.padding(15.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Icon(
+                    Icons.Rounded.ErrorOutline,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.error,
+                    modifier = Modifier.size(20.dp)
+                )
+                Text("Le patch n'a pas abouti", style = MaterialTheme.typography.titleSmall)
+            }
+            SelectionContainer {
+                Text(
+                    message,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onErrorContainer
+                )
+            }
+            Text(
+                "L'erreur complète est conservée dans le journal de cette tentative.",
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onErrorContainer.copy(alpha = 0.75f)
+            )
+            TextButton(onClick = onOpenDiagnostics, contentPadding = PaddingValues(0.dp)) {
+                Icon(Icons.Rounded.History, contentDescription = null, modifier = Modifier.size(15.dp))
+                Spacer(Modifier.width(4.dp))
+                Text("Ouvrir les journaux et diagnostics")
+            }
+        }
     }
 }
 
@@ -443,6 +590,7 @@ private fun PatchRow(
 @Composable
 private fun ProgressCard(state: PatchUiState) {
     val done = state.stages.count { it.status == StageStatus.DONE }
+    val failed = state.stages.firstOrNull { it.status == StageStatus.FAILED }
     val fraction = (done.toFloat() / state.stages.size).coerceIn(0f, 1f)
     Surface(
         shape = RoundedCornerShape(20.dp),
@@ -452,7 +600,12 @@ private fun ProgressCard(state: PatchUiState) {
         Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text("Progression", style = MaterialTheme.typography.titleSmall, modifier = Modifier.weight(1f))
-                Text("$done/${state.stages.size}", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(
+                    if (failed != null) "Échec · ${failed.stage.shortLabel}" else "$done/${state.stages.size}",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = if (failed != null) MaterialTheme.colorScheme.error
+                    else MaterialTheme.colorScheme.onSurfaceVariant
+                )
             }
             LinearProgressIndicator(
                 progress = { fraction },

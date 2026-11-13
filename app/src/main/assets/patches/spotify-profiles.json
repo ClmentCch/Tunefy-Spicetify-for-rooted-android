@@ -3,9 +3,9 @@
   "bundle": {
     "version": "1.2.0",
     "asset": "patches/patches-1.2.0-tunefy.mpp",
-    "sha256": "bdc38eadd482228c5c520765f7027d2c68d1d903e8d76c4536d225d2b3470977",
-    "source": "https://github.com/spicetify/morphe-patches",
-    "notes": "Rebuilt for TuneFy from Spicetify Android patches 1.2.0 with the stale class digest gate removed and SpotifyApplication.onCreate resolved through the superclass chain. See third_party/spicetify-settings-abi.patch."
+    "sha256": "85c934b567272b2205ac7022a03c03998a2ccb312146e7fa4cca12ed659fda1f",
+    "source": "https://github.com/spicetify/morphe-patches/commit/6741682b28f5c120e7e995537b49705a5d8789ec",
+    "notes": "Rebuilt from the upstream semantic ABI digest fix (6741682): class fingerprints now describe class shape instead of hashing old DEX bytes, so they load with the newer dexlib2 used by Morphe Patcher 2.x. Verified on the official 9.1.80.2221 APK: 8/8 patches applied and the APK was rebuilt in a JVM harness on 2026-11-13; no on-device installation test was possible here."
   },
   "profiles": [
     {

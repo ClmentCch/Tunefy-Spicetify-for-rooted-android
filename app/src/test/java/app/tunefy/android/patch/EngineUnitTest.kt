@@ -25,7 +25,7 @@ class EngineUnitTest {
         assertEquals(listOf("arm64-v8a"), profile.abis)
         assertEquals("1.2.0", profiles.bundle.version)
         assertEquals(
-            "bdc38eadd482228c5c520765f7027d2c68d1d903e8d76c4536d225d2b3470977",
+            "85c934b567272b2205ac7022a03c03998a2ccb312146e7fa4cca12ed659fda1f",
             profiles.bundle.sha256
         )
         assertTrue(profile.requiredClasses.contains("Lcom/spotify/music/SpotifyApplication;"))
