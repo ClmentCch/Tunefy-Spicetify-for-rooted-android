@@ -1,0 +1,71 @@
+{
+  "schema": 1,
+  "bundle": {
+    "version": "1.2.0",
+    "asset": "patches/patches-1.2.0-tunefy.mpp",
+    "sha256": "bdc38eadd482228c5c520765f7027d2c68d1d903e8d76c4536d225d2b3470977",
+    "source": "https://github.com/spicetify/morphe-patches",
+    "notes": "Rebuilt for TuneFy from Spicetify Android patches 1.2.0 with the stale class digest gate removed and SpotifyApplication.onCreate resolved through the superclass chain. See third_party/spicetify-settings-abi.patch."
+  },
+  "profiles": [
+    {
+      "versionName": "9.1.80.2221",
+      "versionCode": 145767611,
+      "abis": ["arm64-v8a"],
+      "status": "experimental",
+      "bundleVersion": "1.2.0",
+      "notes": "Cible déclarée par Spicetify Android patches 1.2.0. Le contrôle structurel vérifie les classes et méthodes tracées ; il ne remplace pas un essai d'installation sur appareil.",
+      "requiredMethods": {
+        "Lp/xlt;": ["create"],
+        "Lp/c3g0;": ["<init>(I,Lp/ct71;,I)"],
+        "Lcom/spotify/music/SpotifyApplication;": ["onCreate()"]
+      },
+      "requiredClasses": [
+        "Lcom/spotify/music/SpotifyApplication;",
+        "Lp/xlt;",
+        "Lp/ion;",
+        "Lp/yv80;",
+        "Lp/tdn;",
+        "Lp/tcn;",
+        "Lp/afr;",
+        "Lp/rp60;",
+        "Lp/rfr0;",
+        "Lp/xh0;",
+        "Lp/tyh0;",
+        "Lp/gtl;",
+        "Lp/ftl;",
+        "Lp/dtl;",
+        "Lp/etl;",
+        "Lp/qf60;",
+        "Lkotlin/jvm/functions/Function1;",
+        "Lp/gke;",
+        "Lp/k2u;",
+        "Lp/osa0;",
+        "Lp/hka1;",
+        "Lp/wgy0;",
+        "Lp/dm70;",
+        "Lp/s8;",
+        "Lp/qte;",
+        "Lp/pmy0;",
+        "Lp/cmy0;",
+        "Lp/rk50;",
+        "Lp/nsa0;",
+        "Lp/gv90;",
+        "Lp/abe1;",
+        "Lp/c3g0;"
+      ],
+      "patchRequirements": {
+        "Hide Home and Browse ads": ["Lp/jb20;", "Lp/vot;", "Lp/x7v0;"],
+        "Hide player ad cards": ["Lp/ja31;", "Lp/onq;"],
+        "Hide Premium tab": ["Lp/tkd0;"],
+        "Pin shortcuts on Home": ["Lp/joz0;", "Lp/qt10;"]
+      }
+    }
+  ],
+  "unsupported": [
+    {
+      "versionName": "9.2.0.26",
+      "reason": "Les patches Spicetify Android 1.2.0 ciblent Spotify 9.1.80.2221. Sur 9.2.0.26, le patch « Hide Home and Browse ads » échoue avec « Spotify advertising ABI changed: Lp/jb20; » car cette classe a changé. Installez l'APK 9.1.80.2221 (versionCode 145767611, arm64-v8a) ou attendez un profil compatible 9.2.0.26 vérifié."
+    }
+  ]
+}

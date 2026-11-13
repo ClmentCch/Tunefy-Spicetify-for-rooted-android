@@ -22,6 +22,14 @@ import app.tunefy.android.data.model.ThemeMode
 import app.tunefy.android.download.DownloadEvent
 import app.tunefy.android.install.ApkInspector
 import app.tunefy.android.install.InstallStart
+import app.tunefy.android.patch.GeneratedPatch
+import app.tunefy.android.patch.PatchHistoryRecord
+import app.tunefy.android.patch.PatchRunException
+import app.tunefy.android.patch.PatchStage
+import app.tunefy.android.patch.PatchUiState
+import app.tunefy.android.patch.StageProgress
+import app.tunefy.android.patch.StageStatus
+import app.tunefy.android.patch.TuneFySigningKey
 import app.tunefy.android.util.FileHasher
 import app.tunefy.android.util.Formatters
 import kotlinx.coroutines.Dispatchers
@@ -33,6 +41,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
@@ -51,6 +60,8 @@ class AppViewModel(private val container: AppContainer) : ViewModel() {
     private val rootManager = container.rootManager
     private val apkInstaller = container.apkInstaller
     private val installCoordinator = container.installCoordinator
+    private val patchEngine = container.patchEngine
+    private val patchStore = container.patchStore
 
     val settings = settingsRepository.settings.stateIn(
         viewModelScope, SharingStarted.Eagerly, app.tunefy.android.data.model.AppSettings()
@@ -72,6 +83,11 @@ class AppViewModel(private val container: AppContainer) : ViewModel() {
     val backups: StateFlow<List<BackupEntry>> = libraryRepository.backups.stateIn(
         viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList()
     )
+    val generatedPatches: StateFlow<List<GeneratedPatch>> = patchStore.generated
+    val modificationHistory: StateFlow<List<PatchHistoryRecord>> = patchStore.history
+
+    private val _patchUi = MutableStateFlow(PatchUiState())
+    val patchUi: StateFlow<PatchUiState> = _patchUi.asStateFlow()
 
     private val _spotify = MutableStateFlow(SpotifyStatus())
     val spotify: StateFlow<SpotifyStatus> = _spotify.asStateFlow()
@@ -120,6 +136,19 @@ class AppViewModel(private val container: AppContainer) : ViewModel() {
                     refreshSpotify()
                 } else {
                     toast("Installation échouée : ${result.message ?: "refusée par Android"}")
+                }
+            }
+        }
+        viewModelScope.launch {
+            patchBundle.collect { bundle ->
+                val defaults = bundle?.patches.orEmpty().filter { it.default }.map { it.name }.toSet()
+                _patchUi.update { state ->
+                    if (state.selected.isEmpty() && !state.running && !state.analyzing) {
+                        val available = state.analysis?.patchAvailability.orEmpty()
+                        state.copy(selected = defaults.filter { available[it]?.enabled != false }.toSet())
+                    } else {
+                        state
+                    }
                 }
             }
         }
@@ -175,8 +204,7 @@ class AppViewModel(private val container: AppContainer) : ViewModel() {
                 }
             }
             item.downloadType == DownloadType.RECIPE || item.morpheCompatible -> {
-                toast("Ouvrez Morphe pour appliquer les patches compatibles.")
-                apkInstaller.openMorpheSource()
+                toast("Ouvrez « APK Patcher » dans le menu pour appliquer les patches avec le moteur TuneFy.")
             }
             else -> {
                 toast("Source externe : ouverture du site officiel.")
@@ -209,12 +237,6 @@ class AppViewModel(private val container: AppContainer) : ViewModel() {
             return
         }
         if (!apkInstaller.openExternal(url)) toast("Aucune application pour ouvrir ce lien.")
-    }
-
-    fun openMorphe() {
-        if (!apkInstaller.openMorpheSource()) {
-            openExternal("https://morphe.software/")
-        }
     }
 
     fun openInstallSettings() {
@@ -338,6 +360,203 @@ class AppViewModel(private val container: AppContainer) : ViewModel() {
             patchBundle.value?.patches.orEmpty(),
             patchSelection.value
         )
+
+    // -------------------------------------------------------------------- patcher
+
+    fun selectPatchApk(uri: Uri) {
+        if (_patchUi.value.analyzing || _patchUi.value.running) return
+        viewModelScope.launch {
+            _patchUi.update {
+                it.copy(
+                    analyzing = true,
+                    analysis = null,
+                    error = null,
+                    result = null,
+                    log = "",
+                    stages = PatchStage.entries.map { stage -> StageProgress(stage) }
+                )
+            }
+            try {
+                val analysis = patchEngine.analyze(uri)
+                val defaults = patchBundle.value?.patches.orEmpty()
+                    .filter { it.default }
+                    .map { it.name }
+                    .filter { analysis.patchAvailability[it]?.enabled != false }
+                    .toSet()
+                _patchUi.value = PatchUiState(
+                    analysis = analysis,
+                    analyzing = false,
+                    selected = defaults,
+                    stages = PatchStage.entries.map { stage ->
+                        when (stage) {
+                            PatchStage.ANALYZE -> StageProgress(stage, StageStatus.DONE, analysis.displayName)
+                            PatchStage.COMPATIBILITY -> StageProgress(stage, StageStatus.DONE, analysis.reason)
+                            else -> StageProgress(stage)
+                        }
+                    },
+                    log = buildString {
+                        appendLine("Fichier : ${analysis.displayName}")
+                        appendLine("Package : ${analysis.packageName ?: "inconnu"}")
+                        appendLine("Version : ${analysis.versionName ?: "inconnue"} (${analysis.versionCode})")
+                        appendLine("ABI : ${analysis.abis.joinToString(", ").ifBlank { "non détectée" }}")
+                        appendLine("Modules : ${analysis.splitCount}")
+                        appendLine("SHA-256 : ${analysis.sha256}")
+                        appendLine("Compatibilité : ${analysis.reason}")
+                    }
+                )
+                toast(
+                    if (analysis.compatible) "APK analysé · Spotify ${analysis.versionName}"
+                    else "APK incompatible : ${analysis.reason}"
+                )
+            } catch (error: PatchRunException) {
+                _patchUi.update { it.copy(analyzing = false, error = error.userMessage) }
+                toast("APK refusé : ${error.userMessage}")
+            } catch (error: Exception) {
+                _patchUi.update {
+                    it.copy(analyzing = false, error = error.message ?: "Analyse de l'APK impossible")
+                }
+                toast("Analyse impossible : ${error.message}")
+            }
+        }
+    }
+
+    fun togglePatchSelection(name: String, enabled: Boolean) {
+        _patchUi.update { state ->
+            if (state.running) return@update state
+            if (enabled && state.analysis?.patchAvailability?.get(name)?.enabled == false) return@update state
+            state.copy(
+                selected = if (enabled) state.selected + name else state.selected - name
+            )
+        }
+    }
+
+    fun startPatch() {
+        val state = _patchUi.value
+        val analysis = state.analysis ?: run {
+            toast("Importez d'abord un APK Spotify.")
+            return
+        }
+        if (state.running) return
+        if (!analysis.compatible) {
+            toast("APK incompatible : ${analysis.reason}")
+            return
+        }
+        if (state.selected.isEmpty()) {
+            toast("Sélectionnez au moins un patch.")
+            return
+        }
+        viewModelScope.launch {
+            _patchUi.update {
+                it.copy(
+                    running = true,
+                    error = null,
+                    result = null,
+                    log = "",
+                    stages = PatchStage.entries.map { stage -> StageProgress(stage) }
+                )
+            }
+            try {
+                val result = patchEngine.patch(
+                    analysis = analysis,
+                    selected = state.selected,
+                    onStage = { stage, status, detail ->
+                        _patchUi.update { current ->
+                            current.copy(
+                                stages = current.stages.map { progress ->
+                                    if (progress.stage == stage) progress.copy(status = status, detail = detail)
+                                    else progress
+                                }
+                            )
+                        }
+                    },
+                    onLog = { line ->
+                        _patchUi.update { current ->
+                            current.copy(log = (current.log + line + "\n").takeLast(24_000))
+                        }
+                    }
+                )
+                _patchUi.update { it.copy(running = false, result = result, log = result.log) }
+                toast("APK créé : ${result.artifact.fileName}")
+            } catch (error: PatchRunException) {
+                _patchUi.update {
+                    it.copy(
+                        running = false,
+                        error = error.userMessage,
+                        log = (it.log + "\n" + error.detail).takeLast(24_000)
+                    )
+                }
+                toast("Échec du patch : ${error.userMessage}")
+            } catch (error: Exception) {
+                _patchUi.update {
+                    it.copy(running = false, error = error.message ?: "Échec du patch")
+                }
+                toast("Échec du patch : ${error.message}")
+            }
+        }
+    }
+
+    fun resetPatcher() {
+        if (_patchUi.value.running) return
+        _patchUi.value = PatchUiState()
+    }
+
+    fun installGenerated(artifact: GeneratedPatch) {
+        val file = artifact.file()
+        if (!file.exists()) {
+            toast("APK introuvable : ${artifact.fileName}")
+            return
+        }
+        if (!apkInstaller.canInstallPackages()) {
+            _installPermissionRequest.value = true
+            toast("Autorisez TuneFy à installer des applications.")
+            return
+        }
+        viewModelScope.launch(Dispatchers.IO) {
+            apkInstaller.startSession(
+                apks = listOf(file),
+                packageName = "com.spotify.music",
+                item = null,
+                archiveSha256 = artifact.sha256,
+                signatureSha256 = artifact.signatureSha256
+            ).onSuccess {
+                toast("Vérification OK, confirmez l'installation dans Android.")
+            }.onFailure {
+                toast("Installation impossible : ${it.message}")
+            }
+        }
+    }
+
+    fun saveGenerated(artifact: GeneratedPatch, uri: Uri) {
+        viewModelScope.launch(Dispatchers.IO) {
+            runCatching {
+                val source = artifact.file()
+                val output = context.contentResolver.openOutputStream(uri)
+                    ?: throw IOException("Destination inaccessible")
+                output.use { destination -> source.inputStream().use { it.copyTo(destination) } }
+            }.onSuccess { toast("APK enregistré : ${artifact.fileName}") }
+                .onFailure { toast("Enregistrement impossible : ${it.message}") }
+        }
+    }
+
+    fun deleteGenerated(artifact: GeneratedPatch) {
+        patchStore.deleteGenerated(artifact.id)
+        toast("APK supprimé : ${artifact.fileName}")
+    }
+
+    fun clearModificationHistory() {
+        patchStore.clearHistory()
+        toast("Historique des modifications effacé.")
+    }
+
+    fun patchProfiles() = runCatching { patchEngine.profiles() }.getOrNull()
+
+    fun patchBundleInfo() = patchEngine.bundleInfo()
+
+    fun existingSigningCertificate(): String? = TuneFySigningKey.existingCertificateSha256(context)
+
+    fun patchLogs(): List<File> = patchStore.logs()
+
+    fun readPatchLog(path: String): String? = patchStore.readLog(path)
 
     // ---------------------------------------------------------------------- root
 

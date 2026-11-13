@@ -17,3 +17,5 @@ keystore.properties
 /local-signing/
 /release/
 /app/release/
+
+!app/src/test/resources/*.apk

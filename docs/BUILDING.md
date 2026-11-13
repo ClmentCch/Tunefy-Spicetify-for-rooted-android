@@ -95,6 +95,17 @@ adb shell am start -n app.tunefy.android/.MainActivity
 adb logcat -s AndroidRuntime:E
 ```
 
+## Tests du moteur
+
+```bash
+./gradlew :app:testDebugUnitTest
+```
+
+Les tests JVM couvrent les profils Spotify, le rejet ABI/versionCode, la
+détection de méthodes héritées dans le DEX, la détection ABI, l'empreinte du
+bundle, la reconstruction ARSCLib et la signature/vérification apksig. Ils ne
+remplacent pas un essai sur appareil avec un APK Spotify réel.
+
 ## Mise à jour du dépôt
 
 Après toute modification de `repository/index.json` ou des paquets :
@@ -114,7 +125,8 @@ Le script :
 ## Checklist de release
 
 1. `python3 scripts/update-repository.py`
-2. `./gradlew :app:assembleRelease`
+2. `./gradlew :app:testDebugUnitTest`
+3. `./gradlew :app:assembleRelease`
 3. `apksigner verify` + `aapt2 dump badging`
 4. `sha256sum` de l'APK
 5. Tag `vX.Y.Z` sur `main`

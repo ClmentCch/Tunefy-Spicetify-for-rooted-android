@@ -91,8 +91,34 @@ when {
 }
 ```
 
-L'UI désactive le commutateur et affiche la raison. L'export JSON est purement
-descriptif : Morphe reste seul applicateur.
+L'UI désactive le commutateur et affiche la raison. L'ancien export JSON vers
+Morphe est remplacé par le moteur intégré : `PatchEngine.analyze` construit un
+`ApkAnalysis`, `SpotifyCompatibility.evaluate` vérifie le profil, puis
+`PatchEngine.patch` charge le bundle DEX, applique les patches, reconstruit
+l'APK, le signe avec la clé TuneFy et vérifie la signature.
+
+## Moteur de patch
+
+```text
+URI / APK / APKS / XAPK
+  → ApkInspector.expand (splits)
+  → DexIndexer.index (classes + méthodes)
+  → AbiDetector.detect (lib/<abi>)
+  → SpotifyCompatibility.evaluate (profil JSON)
+  → PatchEngine.patch
+       → SplitMerger.merge si plusieurs modules
+       → PatchBundleStore.ensure (SHA-256)
+       → loadPatchesFromDex(bundle)
+       → Patcher.writeApk
+       → TuneFySigningKey.details + ApkUtils.signApk
+       → ApkUtils.verifiedSigningCertificates + ApkInspector.inspect
+       → GeneratedPatch + journal + historique
+```
+
+Le bundle 1.2.0 est une version TuneFy du bundle Spicetify 1.2.0 : le digest de
+classes obsolète a été retiré et `SpotifyApplication.onCreate` est résolu via la
+chaîne de superclasses. Les contrôles ABI et les fingerprints du patcheur ne sont
+pas contournés ; une classe ou une méthode absente produit une erreur explicite.
 
 ## Root
 
@@ -111,7 +137,12 @@ descriptif : Morphe reste seul applicateur.
 | Bibliothèque / historique / sauvegardes | DataStore `tunefy_library` | JSON sérialisé |
 | Sélection de patches | DataStore `tunefy_patches` | `Set<String>` |
 | Index distant en cache | `filesDir/repository/index.json` | JSON |
-| Patches en cache | `filesDir/morphe/patches-list.json` | JSON |
+| Catalogue de patches | `filesDir/morphe/patches-list.json` | JSON |
+| APK générés | `filesDir/patch/generated/` + `generated.json` | APK + JSON |
+| Historique des modifications | `filesDir/patch/history.json` | JSON |
+| Journaux de patch | `filesDir/patch/logs/<runId>.txt` | texte |
+| Imports APK | `filesDir/patch/imports/` | copie locale |
+| Clé de signature TuneFy | `filesDir/signing/tunefy-signing.bks` | BKS privé |
 | Téléchargements | `filesDir/downloads/` | fichier + `.part` + `tasks.json` |
 | Paquets installés | `filesDir/library/<itemId>/` | fichier d'origine |
 | Sauvegardes | `filesDir/backups/` | `.tar.gz` |

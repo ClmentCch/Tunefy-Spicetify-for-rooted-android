@@ -3,9 +3,11 @@
 **Le magasin Android open source, uniquement consacré à Spotify.**
 
 TuneFy est une application Android native qui rassemble l'application Spotify, les
-extensions Spicetify, les thèmes, les patches Morphe et les outils de
-personnalisation dans une boutique unique, inspirée de l'organisation de F-Droid
-et des guidelines Material 3 d'Android 16.
+extensions Spicetify, les thèmes, les patches Spicetify et un moteur de patch
+intégré dans une boutique unique, inspirée de l'organisation de F-Droid et des
+guidelines Material 3 d'Android 16. TuneFy ne dépend d'aucun gestionnaire de
+patches externe : l'analyse, l'application, la reconstruction et la signature se
+font dans l'application.
 
 > TuneFy n'est affilié ni à Spotify AB, ni à F-Droid, ni à Spicetify. Aucun APK
 > Spotify propriétaire n'est hébergé dans ce dépôt. TuneFy ne contourne ni les
@@ -39,12 +41,15 @@ TuneFy fonctionne comme un vrai magasin d'applications :
 - un **catalogue** filtrable (Spotify, extensions, thèmes, patches, outils) avec
   recherche instantanée ;
 - de **vraies fiches** : version, architecture, taille, Android minimum,
-  compatibilité Spicetify/Morphe, signatures, historique des versions ;
+  compatibilité Spicetify, signatures, historique des versions ;
 - un **gestionnaire de téléchargements** avec progression, vitesse, temps
   restant, pause, reprise, annulation et vérification SHA-256 ;
 - une **bibliothèque** d'extensions et de thèmes installables/désinstallables ;
-- un **écran de patches** alimenté par `spicetify/morphe-patches` avec contrôle
-  de compatibilité de la version Spotify installée ;
+- un **APK Patcher** autonome : import APK/APKS/XAPK, analyse de la version,
+  de l'ABI et des classes DEX, choix de patches, reconstruction et signature
+  TuneFy, vérification SHA-256 ;
+- des pages **Mes APK générés**, **Historique des modifications**,
+  **Compatibilité Spotify** et **Journaux et diagnostics** ;
 - des **outils root optionnels** : détection Magisk/KernelSU/APatch, inspection
   de Spotify, sauvegarde en lecture seule, installation root contrôlée.
 
@@ -62,7 +67,7 @@ une architecture **MVVM**, des **coroutines** et un dépôt JSON versionné.
 | Recherche plein texte + filtres | ✅ |
 | Fiches détaillées (version, code, arch, taille, Android min, licence, package) | ✅ |
 | Historique des versions | ✅ |
-| Compatibilité Spicetify / Morphe calculée sur la version installée | ✅ |
+| Compatibilité Spicetify calculée sur la version installée | ✅ |
 | Dépôt local embarqué + dépôt distant configurable | ✅ |
 | Mise à jour de l'index avec vérification de schéma | ✅ |
 | Thème clair/sombre/système + Material You optionnel | ✅ |
@@ -85,17 +90,21 @@ une architecture **MVVM**, des **coroutines** et un dépôt JSON versionné.
 | Désinstallation propre des paquets de la bibliothèque | ✅ |
 | Journal local des opérations (historique + empreintes) | ✅ |
 
-### Patches
+### APK Patcher intégré
 
 | Fonction | État |
 | --- | --- |
-| Lecture live de `morphe-patches/patches-list.json` | ✅ |
-| Cache local + snapshot embarqué hors ligne | ✅ |
-| Compatibilité patch ↔ version Spotify installée | ✅ |
-| Blocage de l'activation d'un patch incompatible | ✅ |
-| Sélection de patches et export JSON | ✅ |
-| Ouverture de la source Spicetify dans Morphe | ✅ |
-| Application effective des patches | Assurée par Morphe, pas par TuneFy |
+| Moteur de patch embarqué (bibliothèque Morphe Patcher 2.3.0, GPL-3.0) | ✅ |
+| Import APK, APKS et XAPK avec fusion des splits | ✅ |
+| Analyse version, versionCode, ABI, signature et classes DEX | ✅ |
+| Profils de compatibilité extensibles (`spotify-profiles.json`) | ✅ |
+| Catalogue de 8 patches Spicetify Android 1.2.0 | ✅ |
+| Sélection multi-patches avec dépendances et disponibilité par patch | ✅ |
+| Application dans TuneFy, sans Morphe Manager | ✅ |
+| Reconstruction APK, signature TuneFy persistante, vérification apksig | ✅ |
+| Progression en 7 étapes et journal local | ✅ |
+| Installation via `PackageInstaller` ou enregistrement de l'APK | ✅ |
+| Test sur appareil physique et APK Spotify réel | Non vérifié dans cet environnement |
 
 ### Root (optionnel)
 
@@ -120,7 +129,7 @@ principes de navigation de F-Droid avec l'identité visuelle propre à TuneFy :
 
 ## Installation de l'APK
 
-1. Téléchargez `TuneFy-1.0.0-release.apk` depuis la page
+1. Téléchargez `TuneFy-1.1.0-release.apk` depuis la page
    [Releases](https://github.com/ClmentCch/Tunefy-Spicetify-for-rooted-android/releases).
 2. Vérifiez l'empreinte SHA-256 publiée dans les notes de version.
 3. Autorisez l'installation depuis cette source si Android le demande.
@@ -197,14 +206,19 @@ app/                       Application Android (Kotlin, Compose)
     data/                  Modèles, dépôts, DataStore, HTTP
     download/              DownloadManager + service de premier plan
     install/               Inspection APK, PackageInstaller, coordination
+    patch/                 Moteur intégré : analyse, profils, DEX, bundle,
+                           signature TuneFy, stockage, fusion des splits
     root/                  Détection root, gestion Spotify
     ui/                    Thème, composants, écrans, ViewModel
   src/main/assets/
     repository/index.json  Index embarqué
-    patches/               Snapshot morphe-patches
+    patches/               Bundle 1.2.0 corrigé + profils de compatibilité
+  src/test/                Tests JVM du moteur, des profils, du bundle et
+                           de la signature
 repository/                Dépôt TuneFy public (index + paquets JSON)
 scripts/                   Outils de maintenance
 docs/                      Documentation technique
+third_party/               Diff source de la correction Spicetify settings
 ```
 
 ## Architecture
@@ -214,8 +228,12 @@ docs/                      Documentation technique
 - **MVVM** : un `AppViewModel` expose des `StateFlow` issus des dépôts ;
   les écrans collectent avec `collectAsStateWithLifecycle`.
 - **Données** : `CatalogRepository` (index local + distant),
-  `PatchRepository` (patches + sélection + compatibilité), `LibraryRepository`
+  `PatchRepository` (catalogue + compatibilité d'affichage), `LibraryRepository`
   (installation, historique, sauvegardes), `SettingsRepository` (DataStore).
+- **Moteur de patch** : `PatchEngine` (orchestration en 7 étapes),
+  `SpotifyCompatibility` (profils et contrôles ABI/DEX), `DexIndexer`,
+  `PatchBundleStore` (bundle vérifié par SHA-256), `SplitMerger` (ARSCLib),
+  `TuneFySigningKey` (clé BKS privée réutilisée).
 - **Téléchargements** : `DownloadManager` (OkHttp, Range, reprise, vitesse, ETA,
   SHA-256) + `DownloadService` pour la notification persistante.
 - **Installation** : `ApkInspector` (métadonnées, signatures, splits,
@@ -240,21 +258,51 @@ Voir [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) pour le détail des flux.
 - Aucune télémétrie. Les sauvegardes restent dans le stockage privé de TuneFy.
 - Signalement : voir [SECURITY.md](SECURITY.md).
 
-## Patches Spicetify
+## APK Patcher et patches Spicetify
 
-Source officielle : <https://github.com/spicetify/morphe-patches>.
+Source des patches : <https://github.com/spicetify/morphe-patches> (GPL-3.0).
+TuneFy embarque le bundle 1.2.0 corrigé et le charge directement dans son propre
+processus Android via `loadPatchesFromDex`. Aucun Morphe Manager, aucune
+installation externe et aucune ouverture d'application tierce ne sont requis.
 
-TuneFy :
+### Versions prises en charge
 
-1. télécharge `patches-list.json` et le met en cache ;
-2. lit les versions Spotify prises en charge (`9.1.80.2221`, ARM64) ;
-3. compare avec la version réellement installée ;
-4. désactive tout patch incompatible et affiche la raison ;
-5. exporte la sélection et ouvre Morphe pour l'application.
+- **Spotify 9.1.80.2221**, versionCode `145767611`, **arm64-v8a** uniquement.
+- Android 16 / API 36 est la cible de test déclarée.
+- Toute autre version est refusée avant le moindre patch. En particulier,
+  **9.2.0.26 est explicitement non supportée** : le patch « Hide Home and Browse
+  ads » y échoue avec `Spotify advertising ABI changed: Lp/jb20;`. Le message
+  exact est affiché, sans prétendre que le patch a réussi.
 
-TuneFy **n'applique pas** les patches : cela reste le rôle de Morphe, avec votre
-confirmation. Aucun contournement de DRM, d'abonnement ou de publicité audio
-n'est fourni.
+### Correction `SettingsPatch.settingsPatch`
+
+Les erreurs `Spotify settings ABI changed: Lcom/spotify/music/SpotifyApplication;`
+et `missing Lp/rih1;` venaient d'un digest de classes obsolète dans le bundle
+1.1.1 et d'une résolution directe de `onCreate`. Le bundle TuneFy 1.2.0 :
+
+1. ne bloque plus sur le digest obsolète ;
+2. résout `SpotifyApplication.onCreate` via la chaîne de superclasses ;
+3. conserve les vérifications ABI/DEX réelles et échoue explicitement si une
+   classe ou méthode manque.
+
+Le diff source est conservé dans
+[`third_party/spicetify-settings-abi.patch`](third_party/spicetify-settings-abi.patch),
+conformément à la GPL-3.0. Les empreintes du bundle sont vérifiées avant chaque
+utilisation (`bdc38eadd482228c5c520765f7027d2c68d1d903e8d76c4536d225d2b3470977`).
+
+### Pipeline
+
+1. Analyse de l'APK ;
+2. vérification de compatibilité (version, versionCode, ABI, classes/méthodes) ;
+3. préparation des fichiers et fusion des splits ;
+4. application des patches sélectionnés ;
+5. reconstruction de l'APK ;
+6. signature avec la clé TuneFy ;
+7. vérification de la signature et du SHA-256.
+
+TuneFy ne contourne ni les vérifications ABI, ni les fingerprints du patcheur. Un
+patch qui échoue est signalé comme un échec et aucun APK n'est enregistré. Aucun
+contournement de DRM, d'abonnement ou de publicité audio n'est fourni.
 
 ## Fonctionnalités root
 
@@ -274,7 +322,17 @@ et guide de publication : [docs/REPOSITORY_FORMAT.md](docs/REPOSITORY_FORMAT.md)
 - La restauration des données privées Spotify n'est pas proposée : sauvegarde en
   lecture seule uniquement, pour ne jamais écraser les données de l'application.
 - Les thèmes sont des palettes/color.ini prêts à appliquer via le patch
-  « Theme colors » de Morphe ; TuneFy n'injecte pas de CSS dans Spotify.
+  « Theme colors » ; TuneFy n'injecte pas de CSS dans Spotify.
+- Le patchage réel de Spotify n'a pas pu être exécuté dans cet environnement :
+  aucun APK Spotify 9.1.80.2221 n'était disponible et aucun appareil/émulateur
+  Android n'était attaché. Les tests JVM couvrent les profils, l'ABI, le bundle,
+  la reconstruction ARSCLib et la signature apksig, mais pas l'installation sur
+  appareil ni les fingerprints ART du patcheur.
+- La fusion XAPK/APKS est implémentée avec ARSCLib et compilée ; elle n'a pas été
+  validée sur un véritable ensemble de splits Spotify dans cet environnement.
+- Toute build TuneFy est signée par la clé locale TuneFy : Android refusera une
+  mise à jour directe par-dessus Spotify officiel (signature différente). TuneFy
+  ne désinstalle jamais Spotify et ne supprime jamais ses données.
 - Certains fabricants restreignent l'installation de splits (APKM) par des
   applications tierces ; le mode root est alors un recours explicite.
 - L'application n'a pas été validée sur un appareil physique dans cet

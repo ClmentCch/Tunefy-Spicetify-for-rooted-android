@@ -224,5 +224,4 @@ class ApkInstaller(
         true
     }.getOrDefault(false)
 
-    fun openMorpheSource(): Boolean = openExternal(Constants.MORPHE_ADD_SOURCE_URL)
 }

@@ -75,7 +75,7 @@ fun AboutScreen() {
                 shape = RoundedCornerShape(50)
             ) {
                 Text(
-                    "Version 1.0.0 · GPL-3.0",
+                    "Version 1.1.0 · GPL-3.0",
                     style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.onPrimaryContainer,
                     modifier = Modifier.padding(horizontal = 12.dp, vertical = 5.dp)
@@ -105,6 +105,10 @@ fun AboutScreen() {
                 )
                 AboutBullet(
                     Icons.Rounded.Memory,
+                    "APK Patcher intégré : analyse, sélection de patches Spicetify, reconstruction et signature TuneFy, sans Morphe Manager."
+                )
+                AboutBullet(
+                    Icons.Rounded.Security,
                     "Support optionnel de Magisk, KernelSU et APatch : détection Spotify, sauvegardes en lecture seule."
                 )
                 AboutBullet(
@@ -113,7 +117,8 @@ fun AboutScreen() {
                 )
                 Text(
                     "TuneFy ne fournit aucun moyen de contourner un abonnement ou une protection DRM. " +
-                        "Les patches sont édités et appliqués par Spicetify et Morphe, jamais par TuneFy.",
+                        "Les patches sont édités par Spicetify ; TuneFy intègre leur application via une " +
+                        "bibliothèque dérivée de Morphe Patcher (GPL-3.0), sans dépendre de Morphe Manager.",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -130,9 +135,10 @@ fun AboutScreen() {
                 Text("Attributions", style = MaterialTheme.typography.titleMedium)
                 Text(
                     "TuneFy est un projet indépendant. Son organisation de navigation s'inspire de F-Droid " +
-                        "(GPL-3.0), sans réutiliser son logo ou son identité de marque. Les patches et " +
-                        "extensions appartiennent à leurs auteurs Spicetify et Morphe, sous leurs licences " +
-                        "respectives. Spotify est une marque de Spotify AB, utilisée ici à titre descriptif.",
+                        "(GPL-3.0), sans réutiliser son logo ou son identité de marque. Morphe Patcher 2.3.0 " +
+                        "est intégré sous GPL-3.0 ; les patches et extensions appartiennent à leurs auteurs " +
+                        "Spicetify, sous leurs licences respectives. Spotify est une marque de Spotify AB, " +
+                        "utilisée ici à titre descriptif.",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )

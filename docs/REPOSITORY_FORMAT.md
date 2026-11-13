@@ -89,7 +89,7 @@ serveur obligatoire. L'application embarque le même schéma dans
   TuneFy (APK ou paquet de bibliothèque).
 - `external` : la fiche renvoie vers une source officielle (Play Store, site
   d'un outil).
-- `recipe` : recette de patchage appliquée par Morphe, aucun fichier distribué.
+- `recipe` : recette de patchage appliquée par le moteur TuneFy, aucun fichier distribué.
 
 ### Catégories
 
@@ -98,7 +98,7 @@ serveur obligatoire. L'application embarque le même schéma dans
 | `spotify` | Application officielle, recettes de patch |
 | `extensions` | Extensions Spicetify Android |
 | `themes` | Palettes et paquets de thème |
-| `patches` | Bundles de patches Morphe |
+| `patches` | Bundles de patches compatibles avec le moteur TuneFy |
 | `tools` | Outils de personnalisation et patcheurs |
 
 ## Sécurité et vérification

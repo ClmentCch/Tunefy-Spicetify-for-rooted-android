@@ -17,16 +17,20 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.draw.clip
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.ArrowBack
+import androidx.compose.material.icons.rounded.BugReport
 import androidx.compose.material.icons.rounded.Build
 import androidx.compose.material.icons.rounded.Category
 import androidx.compose.material.icons.rounded.Download
 import androidx.compose.material.icons.rounded.Extension
+import androidx.compose.material.icons.rounded.Folder
 import androidx.compose.material.icons.rounded.History
 import androidx.compose.material.icons.rounded.Home
 import androidx.compose.material.icons.rounded.Info
@@ -35,6 +39,7 @@ import androidx.compose.material.icons.rounded.Palette
 import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.material.icons.rounded.Shield
+import androidx.compose.material.icons.rounded.Verified
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Badge
 import androidx.compose.material3.DrawerValue
@@ -74,13 +79,17 @@ import app.tunefy.android.data.model.Category
 import app.tunefy.android.ui.components.TuneFyWordmark
 import app.tunefy.android.ui.nav.Routes
 import app.tunefy.android.ui.screens.AboutScreen
+import app.tunefy.android.ui.screens.ApkPatcherScreen
 import app.tunefy.android.ui.screens.CatalogScreen
+import app.tunefy.android.ui.screens.CompatibilityScreen
 import app.tunefy.android.ui.screens.DetailScreen
+import app.tunefy.android.ui.screens.DiagnosticsScreen
+import app.tunefy.android.ui.screens.GeneratedApksScreen
+import app.tunefy.android.ui.screens.ModHistoryScreen
 import app.tunefy.android.ui.screens.DownloadsScreen
 import app.tunefy.android.ui.screens.HistoryScreen
 import app.tunefy.android.ui.screens.HomeScreen
 import app.tunefy.android.ui.screens.LibraryScreen
-import app.tunefy.android.ui.screens.PatchesScreen
 import app.tunefy.android.ui.screens.RootScreen
 import app.tunefy.android.ui.screens.SearchScreen
 import app.tunefy.android.ui.screens.SettingsScreen
@@ -97,7 +106,11 @@ private val drawerEntries = listOf(
     DrawerEntry(Routes.CATALOG, "Catalogue", Icons.Rounded.Category),
     DrawerEntry(Routes.EXTENSIONS, "Extensions", Icons.Rounded.Extension),
     DrawerEntry(Routes.THEMES, "Thèmes", Icons.Rounded.Palette),
-    DrawerEntry(Routes.PATCHES, "Patches Spicetify", Icons.Rounded.Memory),
+    DrawerEntry(Routes.PATCHES, "APK Patcher", Icons.Rounded.Memory),
+    DrawerEntry(Routes.GENERATED, "Mes APK générés", Icons.Rounded.Folder),
+    DrawerEntry(Routes.MOD_HISTORY, "Historique des modifications", Icons.Rounded.History),
+    DrawerEntry(Routes.COMPATIBILITY, "Compatibilité Spotify", Icons.Rounded.Verified),
+    DrawerEntry(Routes.DIAGNOSTICS, "Journaux et diagnostics", Icons.Rounded.BugReport),
     DrawerEntry(Routes.DOWNLOADS, "Téléchargements", Icons.Rounded.Download),
     DrawerEntry(Routes.ROOT, "Outils root", Icons.Rounded.Build),
     DrawerEntry(Routes.HISTORY, "Historique", Icons.Rounded.History),
@@ -168,8 +181,13 @@ fun TuneFyApp(viewModel: AppViewModel, startOnDownloads: Boolean = false) {
                 Spacer(Modifier.height(16.dp))
                 HorizontalDivider()
                 Spacer(Modifier.height(8.dp))
-                drawerEntries.forEach { entry ->
-                    NavigationDrawerItem(
+                Column(
+                    modifier = Modifier
+                        .weight(1f)
+                        .verticalScroll(rememberScrollState())
+                ) {
+                    drawerEntries.forEach { entry ->
+                        NavigationDrawerItem(
                         label = { Text(entry.label) },
                         icon = { Icon(entry.icon, contentDescription = null) },
                         selected = route == entry.route,
@@ -181,13 +199,13 @@ fun TuneFyApp(viewModel: AppViewModel, startOnDownloads: Boolean = false) {
                                 restoreState = true
                             }
                         },
-                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 2.dp)
-                    )
+                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 2.dp)
+                        )
+                    }
                 }
-                Spacer(Modifier.weight(1f))
                 HorizontalDivider()
                 Text(
-                    text = "TuneFy 1.0.0 · GPL-3.0\n${Constants.PROJECT_URL.removePrefix("https://")}",
+                    text = "TuneFy 1.1.0 · GPL-3.0\n${Constants.PROJECT_URL.removePrefix("https://")}",
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(20.dp)
@@ -243,7 +261,7 @@ fun TuneFyApp(viewModel: AppViewModel, startOnDownloads: Boolean = false) {
                         ) {
                             navController.navigate(Routes.DOWNLOADS) { launchSingleTop = true }
                         }
-                        TuneFyBottomItem("Patches", Icons.Rounded.Memory, route == Routes.PATCHES) {
+                        TuneFyBottomItem("Patcher", Icons.Rounded.Memory, route == Routes.PATCHES) {
                             navController.navigate(Routes.PATCHES) { launchSingleTop = true }
                         }
                         TuneFyBottomItem("Réglages", Icons.Rounded.Settings, route == Routes.SETTINGS) {
@@ -317,7 +335,25 @@ fun TuneFyApp(viewModel: AppViewModel, startOnDownloads: Boolean = false) {
                     )
                 }
                 composable(Routes.PATCHES) {
-                    PatchesScreen(viewModel = viewModel)
+                    ApkPatcherScreen(
+                        viewModel = viewModel,
+                        onOpenGenerated = { navController.navigate(Routes.GENERATED) },
+                        onOpenHistory = { navController.navigate(Routes.MOD_HISTORY) },
+                        onOpenCompatibility = { navController.navigate(Routes.COMPATIBILITY) },
+                        onOpenDiagnostics = { navController.navigate(Routes.DIAGNOSTICS) }
+                    )
+                }
+                composable(Routes.GENERATED) {
+                    GeneratedApksScreen(viewModel = viewModel)
+                }
+                composable(Routes.MOD_HISTORY) {
+                    ModHistoryScreen(viewModel = viewModel)
+                }
+                composable(Routes.COMPATIBILITY) {
+                    CompatibilityScreen(viewModel = viewModel)
+                }
+                composable(Routes.DIAGNOSTICS) {
+                    DiagnosticsScreen(viewModel = viewModel)
                 }
                 composable(Routes.ROOT) {
                     RootScreen(viewModel = viewModel)
@@ -341,7 +377,8 @@ fun TuneFyApp(viewModel: AppViewModel, startOnDownloads: Boolean = false) {
                     DetailScreen(
                         viewModel = viewModel,
                         itemId = itemId,
-                        onOpenItem = { navController.navigate(Routes.detail(it)) }
+                        onOpenItem = { navController.navigate(Routes.detail(it)) },
+                        onOpenPatcher = { navController.navigate(Routes.PATCHES) }
                     )
                 }
             }
@@ -403,7 +440,11 @@ private fun titleFor(route: String): String = when (route) {
     Routes.EXTENSIONS -> "Extensions"
     Routes.THEMES -> "Thèmes"
     Routes.DOWNLOADS -> "Téléchargements"
-    Routes.PATCHES -> "Patches Spicetify"
+    Routes.PATCHES -> "APK Patcher"
+    Routes.GENERATED -> "Mes APK générés"
+    Routes.MOD_HISTORY -> "Historique des modifications"
+    Routes.COMPATIBILITY -> "Compatibilité Spotify"
+    Routes.DIAGNOSTICS -> "Journaux et diagnostics"
     Routes.ROOT -> "Outils root"
     Routes.HISTORY -> "Historique"
     Routes.SETTINGS -> "Paramètres"

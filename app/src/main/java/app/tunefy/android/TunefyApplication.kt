@@ -10,6 +10,8 @@ import app.tunefy.android.data.repo.PatchRepository
 import app.tunefy.android.data.settings.SettingsRepository
 import app.tunefy.android.install.ApkInstaller
 import app.tunefy.android.install.InstallCoordinator
+import app.tunefy.android.patch.PatchEngine
+import app.tunefy.android.patch.PatchStore
 import app.tunefy.android.root.RootManager
 import app.tunefy.android.root.SpotifyManager
 import kotlinx.coroutines.CoroutineScope
@@ -31,6 +33,8 @@ class AppContainer(context: Context) {
     val spotifyManager = SpotifyManager(appContext, rootManager)
     val apkInstaller = ApkInstaller(appContext, libraryRepository)
     val installCoordinator = InstallCoordinator(appContext, libraryRepository, apkInstaller)
+    val patchStore = PatchStore(appContext)
+    val patchEngine = PatchEngine(appContext, patchStore)
     val downloadManager = DownloadManager(
         appContext,
         catalogRepository,

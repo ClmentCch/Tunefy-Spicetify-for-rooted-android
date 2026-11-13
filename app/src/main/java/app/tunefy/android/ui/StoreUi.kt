@@ -52,7 +52,7 @@ object StoreUi {
         Category.THEMES ->
             "Thèmes de couleurs et palettes prêtes à appliquer à Spotify via les patches Spicetify."
         Category.PATCHES ->
-            "Patchs publiés par Spicetify pour Morphe. TuneFy vérifie la compatibilité avant toute action."
+            "Patches publiés par Spicetify, appliqués par le moteur TuneFy après vérification de compatibilité."
         Category.TOOLS ->
             "Outils de personnalisation, de patch et de gestion du dépôt TuneFy."
         Category.SPOTIFY ->

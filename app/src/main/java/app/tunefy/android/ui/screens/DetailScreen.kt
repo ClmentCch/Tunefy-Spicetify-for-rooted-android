@@ -82,7 +82,8 @@ import app.tunefy.android.util.Formatters
 fun DetailScreen(
     viewModel: AppViewModel,
     itemId: String,
-    onOpenItem: (String) -> Unit
+    onOpenItem: (String) -> Unit,
+    onOpenPatcher: () -> Unit
 ) {
     val index by viewModel.index.collectAsStateWithLifecycle()
     val spotify by viewModel.spotify.collectAsStateWithLifecycle()
@@ -205,7 +206,7 @@ fun DetailScreen(
                 item = item,
                 compatibility = compatibility,
                 spotifyVersion = spotify.versionName,
-                onOpenMorphe = viewModel::openMorphe
+                onOpenPatcher = onOpenPatcher
             )
         }
 
@@ -301,7 +302,7 @@ private fun DetailHeader(item: CatalogItem, installedVersion: String?) {
             InfoPill(item.categoryEnum.label, icon = item.categoryEnum.icon())
             InfoPill(item.architecture)
             if (item.spicetifyCompatible) InfoPill("Spicetify", icon = Icons.Rounded.Extension)
-            if (item.morpheCompatible) InfoPill("Morphe", icon = Icons.Rounded.Memory)
+            if (item.spicetifyCompatible) InfoPill("Patches intégrés", icon = Icons.Rounded.Memory)
         }
     }
 }
@@ -320,7 +321,7 @@ private fun DetailActions(
     val primaryLabel = when {
         busy -> "Téléchargement en cours"
         item.downloadType == DownloadType.EXTERNAL -> "Ouvrir la source officielle"
-        item.downloadType == DownloadType.RECIPE -> "Configurer dans Morphe"
+        item.downloadType == DownloadType.RECIPE -> "Configurer dans APK Patcher"
         installedVersion != null && installedVersion != item.version -> "Mettre à jour"
         installedVersion != null -> "Réinstaller"
         else -> "Installer"
@@ -566,7 +567,7 @@ private fun CompatibilityCard(
     item: CatalogItem,
     compatibility: Compatibility,
     spotifyVersion: String?,
-    onOpenMorphe: () -> Unit
+    onOpenPatcher: () -> Unit
 ) {
     val supported = item.supportedSpotifyVersions
     Surface(
@@ -614,10 +615,10 @@ private fun CompatibilityCard(
                 )
             }
             if (item.morpheCompatible || item.categoryEnum == app.tunefy.android.data.model.Category.PATCHES) {
-                TextButton(onClick = onOpenMorphe, contentPadding = PaddingValues(0.dp)) {
+                TextButton(onClick = onOpenPatcher, contentPadding = PaddingValues(0.dp)) {
                     Icon(Icons.Rounded.Memory, contentDescription = null, modifier = Modifier.size(16.dp))
                     Spacer(Modifier.width(6.dp))
-                    Text("Ajouter la source Spicetify dans Morphe")
+                    Text("Ouvrir APK Patcher")
                 }
             }
         }

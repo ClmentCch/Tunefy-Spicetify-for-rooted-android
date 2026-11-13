@@ -555,7 +555,7 @@ private fun CompatibilityShortcut(patchCount: Int, onClick: () -> Unit) {
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
-            Badge { Text("Morphe") }
+            Badge { Text("TuneFy") }
         }
     }
 }

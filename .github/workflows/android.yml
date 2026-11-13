@@ -40,6 +40,9 @@ jobs:
       - name: Regenerate repository assets
         run: python3 scripts/update-repository.py --skip-remote
 
+      - name: Unit tests
+        run: ./gradlew :app:testDebugUnitTest --no-daemon --console=plain
+
       - name: Compile
         run: ./gradlew :app:assembleDebug --no-daemon --console=plain
 

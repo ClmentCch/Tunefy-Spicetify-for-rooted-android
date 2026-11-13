@@ -8,8 +8,6 @@ object Constants {
 
     const val SPOTIFY_PACKAGE = "com.spotify.music"
     const val MORPHE_URL = "https://morphe.software/"
-    const val MORPHE_ADD_SOURCE_URL =
-        "https://morphe.software/add-source?github=spicetify/morphe-patches/tree/main"
     const val MORPHE_PATCHES_REPOSITORY = "https://github.com/spicetify/morphe-patches"
     const val MORPHE_PATCHES_INDEX_URL =
         "https://raw.githubusercontent.com/spicetify/morphe-patches/main/patches-list.json"

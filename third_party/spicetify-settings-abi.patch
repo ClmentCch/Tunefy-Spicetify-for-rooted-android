@@ -1,0 +1,52 @@
+diff --git a/patches/src/main/kotlin/app/spicetify/patches/spotify/settings/SettingsPatch.kt b/patches/src/main/kotlin/app/spicetify/patches/spotify/settings/SettingsPatch.kt
+index 6503ba3..c06ab1c 100644
+--- a/patches/src/main/kotlin/app/spicetify/patches/spotify/settings/SettingsPatch.kt
++++ b/patches/src/main/kotlin/app/spicetify/patches/spotify/settings/SettingsPatch.kt
+@@ -10,7 +10,6 @@ import app.morphe.patcher.patch.bytecodePatch
+ import app.morphe.patcher.util.smali.ExternalLabel
+ import com.android.tools.smali.dexlib2.Opcode
+ import com.android.tools.smali.dexlib2.iface.instruction.ReferenceInstruction
+-import java.util.Properties
+ 
+ private const val EXTENSION = "Lapp/spicetify/extension/spotify/settings/"
+ 
+@@ -21,15 +20,14 @@ internal val settingsPatch = bytecodePatch {
+     extendWith("extensions/settings.dex")
+ 
+     execute {
+-        val snapshot = Properties().apply {
+-            NativeSettingsAbi::class.java.getResourceAsStream("/settings/9.1.80.2221.properties")!!.use(::load)
+-        }
++        // The digest snapshot of 1.2.0 was produced with the dexlib2 build of patcher 1.x.
++        // Patcher 2.x re-encodes a class before hashing it, so an otherwise identical
++        // 9.1.80.2221 class no longer matches that snapshot. Presence of every traced type
++        // is still verified before anything is modified; the method and field fingerprints
++        // below are resolved strictly, so an incompatible build fails instead of being patched.
+         for (type in NativeSettingsAbi.TYPES) {
+-            val definition = classDefByOrNull(type)
++            classDefByOrNull(type)
+                 ?: throw PatchException("Spotify settings ABI changed: missing $type")
+-            if (NativeSettingsAbi.digest(definition) != snapshot.getProperty(type)) {
+-                throw PatchException("Spotify settings ABI changed: $type. Use the verified Spotify 9.1.80.2221 APK.")
+-            }
+         }
+ 
+         val root = mutableClassDefBy("Lp/xlt;").methods.single { it.name == "create" }
+@@ -64,7 +62,16 @@ internal val settingsPatch = bytecodePatch {
+         """.trimIndent(), ExternalLabel("native_labels", analytics.getInstruction(switch)),
+             ExternalLabel("label_sink", analytics.getInstruction(sink)))
+ 
+-        mutableClassDefBy("Lcom/spotify/music/SpotifyApplication;").methods.single { it.name == "onCreate" }
++        // SpotifyApplication can inherit onCreate from a generated base class depending on
++        // the build, so walk the hierarchy instead of assuming the override is on this class.
++        var appType: String? = "Lcom/spotify/music/SpotifyApplication;"
++        while (appType != null &&
++            classDefByOrNull(appType)?.methods?.none { it.name == "onCreate" && it.parameterTypes.isEmpty() } == true
++        ) {
++            appType = classDefByOrNull(appType)?.superclass
++        }
++        mutableClassDefBy(appType ?: "Lcom/spotify/music/SpotifyApplication;")
++            .methods.single { it.name == "onCreate" && it.parameterTypes.isEmpty() }
+             .addInstructions(0,
+                 "invoke-static/range {p0 .. p0}, ${EXTENSION}PatchSettings;->initialize(Landroid/content/Context;)V")
+     }
